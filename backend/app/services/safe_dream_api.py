@@ -69,13 +69,19 @@ class SafeDreamAPI:
             async with httpx.AsyncClient(timeout=30.0) as client:
                 print(f"🔍 요청 URL: {self.base_url}")
                 print(f"🔍 요청 Body: {body}")
-                
+
+                # 등록된 URL에서 오는 것처럼 헤더 추가
+                headers = {
+                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                    "Referer": "https://nightmarish-vampire-pqxqw7gv7v7hrq7p-8000.app.github.dev/",
+                    "Origin": "https://nightmarish-vampire-pqxqw7gv7v7hrq7p-8000.app.github.dev",
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                }
+
                 response = await client.post(
                     self.base_url,
                     content=body,
-                    headers={
-                        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
-                    }
+                    headers=headers
                 )
                 
                 print(f"🔍 응답 상태: {response.status_code}")

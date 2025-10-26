@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>안전Dream API 테스트</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        button { padding: 10px 20px; font-size: 16px; margin: 10px 0; }
+        pre { background: #f4f4f4; padding: 15px; overflow-x: auto; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>안전Dream API 브라우저 테스트</h1>
+
+    <button onclick="testAPI()">API 호출 테스트</button>
+
+    <div id="result"></div>
+
+    <script>
+        async function testAPI() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<p>⏳ API 호출 중...</p>';
+
+            const params = new URLSearchParams({
+                esntlId: '10000855',
+                authKey: '4fd2a9d68b504580',
+                rowSize: '10',
+                page: '1',
+                sexdstnDscd: '',
+                nm: '',
+                detailDate1: '',
+                detailDate2: '',
+                age1: '',
+                age2: '',
+                etcSpfeatr: '',
+                occrAdres: '',
+                xmlUseYN: '',
+                writngTrgetDscds: '010'
+            });
+
+            try {
+                const response = await fetch('https://www.safe182.go.kr/api/lcm/findChildList.do', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                    },
+                    body: params.toString()
+                });
+
+                console.log('Response status:', response.status);
+                const text = await response.text();
+                console.log('Response text:', text);
+
+                if (response.ok) {
+                    const data = JSON.parse(text);
+                    resultDiv.innerHTML = `
+                        <h2 class="success">✅ 성공!</h2>
+                        <p>상태 코드: ${response.status}</p>
+                        <p>결과: ${data.result}</p>
+                        <p>총 개수: ${data.totalCount}</p>
+                        <p>데이터 개수: ${data.list ? data.list.length : 0}</p>
+                        <h3>응답 데이터:</h3>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <h2 class="error">❌ 실패</h2>
+                        <p>상태 코드: ${response.status}</p>
+                        <p>응답:</p>
+                        <pre>${text}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <h2 class="error">❌ 에러</h2>
+                    <p>${error.message}</p>
+                    <p>CORS 에러가 발생했을 수 있습니다.</p>
+                    <p>브라우저 콘솔(F12)을 확인하세요.</p>
+                `;
+                console.error('Error:', error);
+            }
+        }
+    </script>
+</body>
+</html>

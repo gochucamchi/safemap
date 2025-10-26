@@ -1,192 +1,176 @@
 import httpx
 from typing import List, Dict, Optional
 from datetime import datetime
-from app.config import settings
+from urllib.parse import urlencode
 
-
-class SafeDreamAPIService:
-    """안전Dream OPEN API 연동 서비스"""
+class SafeDreamAPI:
+    """안전Dream API 클라이언트 - 실종검색 API"""
     
-    def __init__(self):
-        self.base_url = settings.safe_dream_base_url
-        self.api_key = settings.safe_dream_api_key
-        
-    async def get_missing_alerts(self, limit: int = 100) -> List[Dict]:
+    def __init__(self, api_key: str, esntl_id: str = None):
+        self.api_key = api_key
+        # esntl_id가 없으면 환경변수에서 가져오기
+        self.esntl_id = esntl_id or "10000855"  # 실제 발급 ID
+        self.base_url = "https://www.safe182.go.kr/api/lcm/findChildList.do"
+    
+    async def get_missing_children(
+        self, 
+        row_size: int = 100,
+        page_num: int = 1,
+        writng_trget_dscds: List[str] = None
+    ) -> Dict:
         """
-        실종경보 정보 조회
+        실종아동 목록 조회
         
         Args:
-            limit: 조회할 최대 건수
+            row_size: 한 페이지 결과 수
+            page_num: 페이지 번호
+            writng_trget_dscds: 대상구분 코드 리스트
+                - "010": 아동
+                - "060": 지적장애
+                - "070": 치매
             
         Returns:
-            실종경보 데이터 리스트
+            {
+                "result": "성공/실패",
+                "msg": "메시지",
+                "totalCount": 총개수,
+                "list": [...]
+            }
         """
-        url = f"{self.base_url}/home/api/missingAlert.do"
+        # 기본 대상구분: 아동, 지적장애, 치매
+        if writng_trget_dscds is None:
+            writng_trget_dscds = ["010", "060", "070"]
         
+        # POST body 파라미터 생성
         params = {
+            "esntlId": self.esntl_id,
             "authKey": self.api_key,
-            "rowSize": limit
+            "rowSize": str(row_size),
+            "page": str(page_num),
+            "sexdstnDscd": "",  # 성별 (비우면 전체)
+            "nm": "",  # 성명 (비우면 전체)
+            "detailDate1": "",  # 시작일
+            "detailDate2": "",  # 종료일
+            "age1": "",  # 최소 나이
+            "age2": "",  # 최대 나이
+            "etcSpfeatr": "",  # 기타 특징
+            "occrAdres": "",  # 발생주소
+            "xmlUseYN": "",  # 비우면 JSON
         }
+        
+        # writngTrgetDscds 배열 처리
+        body_parts = [urlencode(params)]
+        for dscd in writng_trget_dscds:
+            body_parts.append(f"writngTrgetDscds={dscd}")
+        
+        body = "&".join(body_parts)
         
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.get(url, params=params)
-                response.raise_for_status()
+                print(f"🔍 요청 URL: {self.base_url}")
+                print(f"🔍 요청 Body: {body}")
+                
+                response = await client.post(
+                    self.base_url,
+                    content=body,
+                    headers={
+                        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+                    }
+                )
+                
+                print(f"🔍 응답 상태: {response.status_code}")
+                print(f"🔍 응답 내용: {response.text[:1000]}")
+                
+                if response.status_code != 200:
+                    return {
+                        "result": "실패", 
+                        "msg": f"HTTP {response.status_code}: {response.text[:200]}", 
+                        "totalCount": 0, 
+                        "list": []
+                    }
                 
                 data = response.json()
+                return data
                 
-                # API 응답 파싱
-                if data.get("result") == "SUCCESS":
-                    return data.get("list", [])
-                else:
-                    print(f"API Error: {data.get('message', 'Unknown error')}")
-                    return []
-                    
         except httpx.HTTPError as e:
-            print(f"HTTP Error: {e}")
-            return []
+            print(f"❌ API 호출 실패: {e}")
+            return {"result": "실패", "msg": str(e), "totalCount": 0, "list": []}
         except Exception as e:
-            print(f"Error fetching missing alerts: {e}")
-            return []
+            print(f"❌ 데이터 처리 실패: {e}")
+            return {"result": "실패", "msg": str(e), "totalCount": 0, "list": []}
     
-    async def search_missing_persons(
-        self, 
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        age_min: Optional[int] = None,
-        age_max: Optional[int] = None,
-        gender: Optional[str] = None,
-        location: Optional[str] = None
-    ) -> List[Dict]:
+    def parse_missing_person(self, item: Dict) -> Optional[Dict]:
         """
-        실종자 검색
+        API 응답을 데이터베이스 모델로 변환
         
         Args:
-            start_date: 시작일 (YYYYMMDD)
-            end_date: 종료일 (YYYYMMDD)
-            age_min: 최소 나이
-            age_max: 최대 나이
-            gender: 성별 (M/F)
-            location: 실종 지역
-            
+            item: API 응답의 list 항목
+            {
+                "occrde": "20241020",  # 발생일시
+                "age": "7",  # 당시나이
+                "ageNow": "8",  # 현재나이
+                "sexdstnDscd": "남자",  # 성별
+                "occrAdres": "서울특별시 강남구",  # 발생장소
+                "nm": "홍길동",  # 성명
+                "writngTrgetDscd": "아동",  # 대상구분
+                "alldressingDscd": "청바지, 흰색 티셔츠",  # 착의사항
+                "msspsnIdntfccd": "M202410200001"  # 실종자식별코드
+            }
+        
         Returns:
-            실종자 데이터 리스트
-        """
-        url = f"{self.base_url}/home/api/missingSearch.do"
-        
-        params = {
-            "authKey": self.api_key
-        }
-        
-        # 선택적 파라미터 추가
-        if start_date:
-            params["startDate"] = start_date
-        if end_date:
-            params["endDate"] = end_date
-        if age_min:
-            params["ageMin"] = age_min
-        if age_max:
-            params["ageMax"] = age_max
-        if gender:
-            params["gender"] = gender
-        if location:
-            params["location"] = location
-        
-        try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.get(url, params=params)
-                response.raise_for_status()
-                
-                data = response.json()
-                
-                if data.get("result") == "SUCCESS":
-                    return data.get("list", [])
-                else:
-                    print(f"API Error: {data.get('message', 'Unknown error')}")
-                    return []
-                    
-        except httpx.HTTPError as e:
-            print(f"HTTP Error: {e}")
-            return []
-        except Exception as e:
-            print(f"Error searching missing persons: {e}")
-            return []
-    
-    async def get_safety_facilities(
-        self, 
-        facility_type: Optional[str] = None,
-        region: Optional[str] = None
-    ) -> List[Dict]:
-        """
-        안전지도 시설 정보 조회
-        
-        Args:
-            facility_type: 시설 유형
-            region: 지역
-            
-        Returns:
-            안전시설 데이터 리스트
-        """
-        url = f"{self.base_url}/home/api/safetyMap.do"
-        
-        params = {
-            "authKey": self.api_key
-        }
-        
-        if facility_type:
-            params["type"] = facility_type
-        if region:
-            params["region"] = region
-        
-        try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.get(url, params=params)
-                response.raise_for_status()
-                
-                data = response.json()
-                
-                if data.get("result") == "SUCCESS":
-                    return data.get("list", [])
-                else:
-                    print(f"API Error: {data.get('message', 'Unknown error')}")
-                    return []
-                    
-        except httpx.HTTPError as e:
-            print(f"HTTP Error: {e}")
-            return []
-        except Exception as e:
-            print(f"Error fetching safety facilities: {e}")
-            return []
-    
-    def parse_missing_person_data(self, raw_data: Dict) -> Dict:
-        """
-        안전Dream API 응답을 표준 형식으로 변환
-        
-        Args:
-            raw_data: API 원본 데이터
-            
-        Returns:
-            표준화된 실종자 데이터
+            변환된 딕셔너리 또는 None
         """
         try:
             return {
-                "name": raw_data.get("nm", "비공개"),
-                "age": raw_data.get("age"),
-                "gender": raw_data.get("sex"),
-                "missing_date": raw_data.get("occrde"),
-                "location_address": raw_data.get("occrAdres"),
-                "location_detail": raw_data.get("occrDtl"),
-                "height": raw_data.get("height"),
-                "weight": raw_data.get("weight"),
-                "clothing": raw_data.get("dressing"),
-                "features": raw_data.get("chartor"),
-                "case_number": raw_data.get("caseNo"),
-                "status": raw_data.get("status", "missing")
+                "external_id": item.get("msspsnIdntfccd", ""),  # 실종자식별코드
+                "missing_date": self._parse_date(item.get("occrde")),  # 발생일시
+                "location_address": item.get("occrAdres", ""),  # 발생장소
+                "location_detail": item.get("alldressingDscd", ""),  # 착의사항 (상세정보로 활용)
+                "age": self._parse_age(item.get("age")),  # 당시나이
+                "gender": self._parse_gender(item.get("sexdstnDscd")),  # 성별
+                "latitude": None,  # API에서 제공 안 함
+                "longitude": None,  # API에서 제공 안 함
             }
         except Exception as e:
-            print(f"Error parsing data: {e}")
-            return {}
+            print(f"⚠️ 데이터 파싱 실패: {e}, item: {item}")
+            return None
+    
+    def _parse_date(self, date_str: str) -> Optional[datetime]:
+        """날짜 문자열 파싱 (YYYYMMDD 형식)"""
+        if not date_str:
+            return None
+        try:
+            if len(date_str) == 8:
+                return datetime.strptime(date_str, "%Y%m%d")
+            return datetime.fromisoformat(date_str)
+        except Exception as e:
+            print(f"⚠️ 날짜 파싱 실패: {date_str}, {e}")
+            return None
+    
+    def _parse_age(self, age_str: str) -> Optional[int]:
+        """나이 파싱"""
+        try:
+            return int(age_str) if age_str else None
+        except:
+            return None
+    
+    def _parse_gender(self, gender_str: str) -> Optional[str]:
+        """성별 파싱 (M/F)"""
+        if not gender_str:
+            return None
+        if "남" in gender_str:
+            return "M"
+        elif "여" in gender_str:
+            return "F"
+        return None
 
 
 # 싱글톤 인스턴스
-safe_dream_service = SafeDreamAPIService()
+safe_dream_service = None
+
+def get_safe_dream_service(api_key: str) -> SafeDreamAPI:
+    """SafeDream API 서비스 인스턴스 반환"""
+    global safe_dream_service
+    if safe_dream_service is None:
+        safe_dream_service = SafeDreamAPI(api_key)
+    return safe_dream_service

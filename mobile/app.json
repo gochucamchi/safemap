@@ -1,0 +1,11 @@
+{
+  "expo": {
+    "name": "SafeMap",
+    "slug": "safemap-mobile",
+    "version": "1.0.0",
+    "platforms": ["web", "ios", "android"],
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from typing import List, Optional
 from datetime import datetime, timedelta
 import os
@@ -69,13 +70,13 @@ async def get_statistics(
     # 지역별 통계 (상위 5개)
     top_locations = db.query(
         MissingPerson.location_address,
-        db.func.count(MissingPerson.id).label("count")
+        func.count(MissingPerson.id).label("count")
     ).filter(
         MissingPerson.missing_date >= since_date
     ).group_by(
         MissingPerson.location_address
     ).order_by(
-        db.func.count(MissingPerson.id).desc()
+        func.count(MissingPerson.id).desc()
     ).limit(5).all()
     
     return {

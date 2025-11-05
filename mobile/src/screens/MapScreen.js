@@ -7,6 +7,9 @@ const isWeb = Platform.OS === 'web';
 
 // 웹용 간단한 지도 표시 컴포넌트
 function WebMapView({ missingPersons }) {
+  const missingCount = missingPersons.filter(p => p.status === 'missing').length;
+  const resolvedCount = missingPersons.filter(p => p.status === 'resolved').length;
+
   return (
     <ScrollView style={styles.webMapContainer}>
       <View style={styles.webMapHeader}>
@@ -14,27 +17,47 @@ function WebMapView({ missingPersons }) {
         <Text style={styles.webMapSubtitle}>
           모바일 앱에서 실제 지도로 확인하세요
         </Text>
+        <View style={styles.statusSummary}>
+          <Text style={styles.statusMissing}>🔴 실종 중: {missingCount}명</Text>
+          <Text style={styles.statusResolved}>🟢 실종 해제: {resolvedCount}명</Text>
+        </View>
       </View>
-      
+
       <View style={styles.locationGrid}>
-        {missingPersons.map((person, index) => (
-          <View key={person.id} style={styles.locationCard}>
-            <View style={styles.locationNumber}>
-              <Text style={styles.locationNumberText}>{index + 1}</Text>
-            </View>
-            <View style={styles.locationInfo}>
-              <Text style={styles.locationAddress}>📍 {person.location_address}</Text>
-              <Text style={styles.locationDate}>
-                {new Date(person.missing_date).toLocaleDateString('ko-KR')}
-              </Text>
-              {person.latitude && person.longitude && (
-                <Text style={styles.locationCoords}>
-                  위도: {person.latitude.toFixed(4)}, 경도: {person.longitude.toFixed(4)}
+        {missingPersons.map((person, index) => {
+          const isResolved = person.status === 'resolved';
+          const cardColor = isResolved ? '#4CAF50' : '#FF3B30';
+          const emoji = isResolved ? '✅' : '📍';
+
+          return (
+            <View
+              key={person.id}
+              style={[styles.locationCard, { borderLeftColor: cardColor }]}
+            >
+              <View style={[styles.locationNumber, { backgroundColor: cardColor }]}>
+                <Text style={styles.locationNumberText}>{index + 1}</Text>
+              </View>
+              <View style={styles.locationInfo}>
+                <Text style={styles.locationAddress}>
+                  {emoji} {person.location_address}
                 </Text>
-              )}
+                <Text style={styles.locationDate}>
+                  실종: {new Date(person.missing_date).toLocaleDateString('ko-KR')}
+                </Text>
+                {isResolved && person.resolved_at && (
+                  <Text style={styles.resolvedDate}>
+                    해제: {new Date(person.resolved_at).toLocaleDateString('ko-KR')} 🎉
+                  </Text>
+                )}
+                {person.latitude && person.longitude && (
+                  <Text style={styles.locationCoords}>
+                    위도: {person.latitude.toFixed(4)}, 경도: {person.longitude.toFixed(4)}
+                  </Text>
+                )}
+              </View>
             </View>
-          </View>
-        ))}
+          );
+        })}
       </View>
     </ScrollView>
   );
@@ -174,6 +197,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#1976D2',
   },
+  statusSummary: {
+    flexDirection: 'row',
+    gap: 15,
+    marginTop: 12,
+  },
+  statusMissing: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#C62828',
+  },
+  statusResolved: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2E7D32',
+  },
   locationGrid: {
     padding: 15,
   },
@@ -217,6 +255,12 @@ const styles = StyleSheet.create({
   locationDate: {
     fontSize: 14,
     color: '#666',
+    marginBottom: 4,
+  },
+  resolvedDate: {
+    fontSize: 14,
+    color: '#4CAF50',
+    fontWeight: '600',
     marginBottom: 4,
   },
   locationCoords: {

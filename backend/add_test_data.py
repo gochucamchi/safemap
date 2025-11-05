@@ -20,6 +20,8 @@ test_data = [
         "age": 7,
         "gender": "M",
         "location_detail": "청바지, 흰색 티셔츠 착용",
+        "status": "missing",
+        "resolved_at": None,
         "created_at": datetime.now(),
         "updated_at": datetime.now()
     },
@@ -32,6 +34,8 @@ test_data = [
         "age": 30,
         "gender": "F",
         "location_detail": "검정 코트, 청바지",
+        "status": "resolved",
+        "resolved_at": datetime.now() - timedelta(days=1),
         "created_at": datetime.now(),
         "updated_at": datetime.now()
     },
@@ -44,6 +48,8 @@ test_data = [
         "age": 65,
         "gender": "M",
         "location_detail": "회색 점퍼, 검정 바지",
+        "status": "missing",
+        "resolved_at": None,
         "created_at": datetime.now(),
         "updated_at": datetime.now()
     },
@@ -56,6 +62,8 @@ test_data = [
         "age": 45,
         "gender": "F",
         "location_detail": "빨간 원피스",
+        "status": "resolved",
+        "resolved_at": datetime.now() - timedelta(days=2),
         "created_at": datetime.now(),
         "updated_at": datetime.now()
     },
@@ -68,6 +76,8 @@ test_data = [
         "age": 22,
         "gender": "M",
         "location_detail": "파란 후드티, 청바지",
+        "status": "missing",
+        "resolved_at": None,
         "created_at": datetime.now(),
         "updated_at": datetime.now()
     },

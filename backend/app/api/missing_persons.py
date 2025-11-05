@@ -31,6 +31,7 @@ async def health_check():
 async def get_missing_persons(
     limit: int = Query(100, ge=1, le=1000),
     skip: int = Query(0, ge=0),
+    status: Optional[str] = Query(None, description="상태 필터 (missing/resolved/all)", regex="^(missing|resolved|all)$"),
     days: Optional[int] = Query(None, ge=1, le=3650, description="최근 N일 데이터"),
     start_date: Optional[str] = Query(None, description="시작일 (YYYY-MM-DD)"),
     end_date: Optional[str] = Query(None, description="종료일 (YYYY-MM-DD)"),
@@ -38,32 +39,41 @@ async def get_missing_persons(
 ):
     """
     실종자 목록 조회
-    
+
+    상태 필터:
+    - status=missing → 실종 중인 사람만
+    - status=resolved → 실종 해제된 사람만
+    - status=all 또는 생략 → 전체
+
     날짜 필터 옵션:
     1. days=30 → 최근 30일
     2. start_date=2024-01-01&end_date=2024-12-31 → 특정 기간
     3. 둘 다 없으면 → 전체 데이터
     """
     query = db.query(MissingPerson)
-    
+
+    # ✅ 상태 필터 적용
+    if status and status != "all":
+        query = query.filter(MissingPerson.status == status)
+
     # 날짜 필터 적용
     if days:
         # 최근 N일
         since_date = datetime.now() - timedelta(days=days)
         query = query.filter(MissingPerson.missing_date >= since_date)
-    
+
     elif start_date and end_date:
         # 특정 기간
         try:
             start = datetime.strptime(start_date, "%Y-%m-%d")
             end = datetime.strptime(end_date, "%Y-%m-%d")
-            
+
             if start > end:
                 raise HTTPException(
-                    status_code=400, 
+                    status_code=400,
                     detail="시작일이 종료일보다 늦을 수 없습니다"
                 )
-            
+
             query = query.filter(
                 and_(
                     MissingPerson.missing_date >= start,
@@ -75,16 +85,16 @@ async def get_missing_persons(
                 status_code=400,
                 detail="날짜 형식이 잘못되었습니다. YYYY-MM-DD 형식으로 입력하세요"
             )
-    
+
     # 정렬 및 페이징
     persons = query.order_by(MissingPerson.missing_date.desc())\
         .offset(skip)\
         .limit(limit)\
         .all()
-    
+
     # 전체 개수 (필터 적용 후)
     total_count = query.count()
-    
+
     return {
         "total": total_count,
         "items": [
@@ -98,6 +108,8 @@ async def get_missing_persons(
                 "gender": p.gender,
                 "latitude": p.latitude,
                 "longitude": p.longitude,
+                "status": p.status,  # ✅ 추가
+                "resolved_at": p.resolved_at.isoformat() if p.resolved_at else None,  # ✅ 추가
             }
             for p in persons
         ]
@@ -111,19 +123,25 @@ async def get_statistics(
 ):
     """통계 조회 (날짜 필터 적용)"""
     since_date = datetime.now() - timedelta(days=days)
-    
+
     # 기간 내 전체 실종자
     total_query = db.query(MissingPerson)\
         .filter(MissingPerson.missing_date >= since_date)
-    
+
     total_count = total_query.count()
-    
+
+    # ✅ 상태별 통계 (실종 중 / 실종 해제)
+    status_stats = {}
+    for status in ["missing", "resolved"]:
+        count = total_query.filter(MissingPerson.status == status).count()
+        status_stats[status] = count
+
     # 성별 통계
     gender_stats = {}
     for gender in ["M", "F"]:
         count = total_query.filter(MissingPerson.gender == gender).count()
         gender_stats[gender] = count
-    
+
     # 지역별 통계 (상위 5개)
     top_locations = db.query(
         MissingPerson.location_address,
@@ -135,29 +153,30 @@ async def get_statistics(
     ).order_by(
         func.count(MissingPerson.id).desc()
     ).limit(5).all()
-    
+
     # 일별 통계 (최근 30일)
     daily_stats = []
     for i in range(min(days, 30)):
         date = datetime.now() - timedelta(days=i)
         date_start = date.replace(hour=0, minute=0, second=0, microsecond=0)
         date_end = date.replace(hour=23, minute=59, second=59, microsecond=999999)
-        
+
         count = db.query(MissingPerson).filter(
             and_(
                 MissingPerson.missing_date >= date_start,
                 MissingPerson.missing_date <= date_end
             )
         ).count()
-        
+
         daily_stats.append({
             "date": date.strftime("%Y-%m-%d"),
             "count": count
         })
-    
+
     return {
         "period_days": days,
         "total_count": total_count,
+        "status_statistics": status_stats,  # ✅ 추가
         "gender_statistics": gender_stats,
         "top_locations": [
             {"region": loc[0], "count": loc[1]}
@@ -200,6 +219,7 @@ async def sync_missing_persons(
                 "total_fetched": result["total_fetched"],
                 "new_added": result["new_added"],
                 "updated": result["updated"],
+                "resolved": result["resolved"],  # ✅ 추가
                 "skipped": result["skipped"],
                 "duration_seconds": result["duration"],
             },

@@ -1,174 +1,201 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   StyleSheet,
   ActivityIndicator,
   Text,
-  Platform,
-  ScrollView,
   TouchableOpacity,
-  Dimensions,
 } from 'react-native';
+import { WebView } from 'react-native-webview';
 import { api } from '../services/api';
 import AdvancedFilterModal from '../components/AdvancedFilterModal';
 
-const isWeb = Platform.OS === 'web';
+// Kakao Maps HTML 템플릿
+const getKakaoMapHTML = (markers: any[], dangerZones: any[]) => {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <style>
+    * { margin: 0; padding: 0; }
+    html, body, #map { width: 100%; height: 100%; }
+    .custom-overlay {
+      position: relative;
+      bottom: 85px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      background: white;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-family: -apple-system, sans-serif;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+    .custom-overlay .title {
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #333;
+    }
+    .custom-overlay .info {
+      font-size: 11px;
+      color: #666;
+    }
+    .custom-overlay:after {
+      content: '';
+      position: absolute;
+      bottom: -12px;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border: 6px solid transparent;
+      border-top-color: white;
+      border-bottom: 0;
+      margin-left: -6px;
+    }
+    .legend {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      font-size: 12px;
+      z-index: 1000;
+    }
+    .legend-title {
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #333;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .legend-color {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      margin-right: 6px;
+    }
+  </style>
+  <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=YOUR_APP_KEY&libraries=clusterer"></script>
+</head>
+<body>
+  <div id="map"></div>
+  <div class="legend">
+    <div class="legend-title">🗺️ 범례</div>
+    <div class="legend-item">
+      <div class="legend-color" style="background: rgba(255, 0, 0, 0.4); border: 2px solid #FF0000;"></div>
+      <span>고위험 지역</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color" style="background: rgba(255, 165, 0, 0.4); border: 2px solid #FFA500;"></div>
+      <span>중위험 지역</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color" style="background: rgba(255, 255, 0, 0.4); border: 2px solid #FFFF00;"></div>
+      <span>저위험 지역</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color" style="background: #FF3B30; border-radius: 50%;"></div>
+      <span>실종 중</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-color" style="background: #34C759; border-radius: 50%;"></div>
+      <span>실종 해제</span>
+    </div>
+  </div>
+  <script>
+    // Kakao Maps API Key가 없으면 경고 표시
+    if (typeof kakao === 'undefined') {
+      document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;text-align:center;padding:20px;"><div><h2>⚠️ Kakao Maps API 키 필요</h2><p style="margin-top:10px;color:#666;">Kakao Developers에서 앱 키를 발급받아 YOUR_APP_KEY를 교체하세요</p></div></div>';
+    } else {
+      var markers = ${JSON.stringify(markers)};
+      var dangerZones = ${JSON.stringify(dangerZones)};
 
-// 웹용 간단한 지도 표시 컴포넌트
-function WebMapView({ missingPersons }) {
-  const missingCount = missingPersons.filter((p) => p.status === 'missing').length;
-  const resolvedCount = missingPersons.filter((p) => p.status === 'resolved').length;
+      // 지도 중심 계산
+      var centerLat = markers.length > 0
+        ? markers.reduce((sum, m) => sum + m.lat, 0) / markers.length
+        : 37.5665;
+      var centerLng = markers.length > 0
+        ? markers.reduce((sum, m) => sum + m.lng, 0) / markers.length
+        : 126.9780;
 
-  return (
-    <ScrollView style={styles.webMapContainer}>
-      <View style={styles.webMapHeader}>
-        <Text style={styles.webMapTitle}>🗺️ 실종 사건 위치</Text>
-        <Text style={styles.webMapSubtitle}>
-          모바일 앱에서 실제 지도로 확인하세요
-        </Text>
-        <View style={styles.statusSummary}>
-          <Text style={styles.statusMissing}>🔴 실종 중: {missingCount}명</Text>
-          <Text style={styles.statusResolved}>🟢 실종 해제: {resolvedCount}명</Text>
-        </View>
-      </View>
+      var mapContainer = document.getElementById('map');
+      var mapOption = {
+        center: new kakao.maps.LatLng(centerLat, centerLng),
+        level: 7
+      };
 
-      <View style={styles.locationGrid}>
-        {missingPersons.map((person, index) => {
-          const isResolved = person.status === 'resolved';
-          const cardColor = isResolved ? '#4CAF50' : '#FF3B30';
-          const emoji = isResolved ? '✅' : '📍';
+      var map = new kakao.maps.Map(mapContainer, mapOption);
 
-          return (
-            <View
-              key={person.id}
-              style={[styles.locationCard, { borderLeftColor: cardColor }]}
-            >
-              <View style={[styles.locationNumber, { backgroundColor: cardColor }]}>
-                <Text style={styles.locationNumberText}>{index + 1}</Text>
-              </View>
-              <View style={styles.locationInfo}>
-                <Text style={styles.locationAddress}>
-                  {emoji} {person.location_address}
-                </Text>
-                <Text style={styles.locationDate}>
-                  실종: {new Date(person.missing_date).toLocaleDateString('ko-KR')}
-                </Text>
-                {person.age && person.gender && (
-                  <Text style={styles.personInfo}>
-                    {person.gender === 'M' ? '남성' : '여성'} · {person.age}세
-                  </Text>
-                )}
-                {isResolved && person.resolved_at && (
-                  <Text style={styles.resolvedDate}>
-                    해제: {new Date(person.resolved_at).toLocaleDateString('ko-KR')} 🎉
-                  </Text>
-                )}
-                {person.latitude && person.longitude && (
-                  <Text style={styles.locationCoords}>
-                    위도: {person.latitude.toFixed(4)}, 경도: {person.longitude.toFixed(4)}
-                  </Text>
-                )}
-              </View>
-            </View>
-          );
-        })}
-      </View>
-    </ScrollView>
-  );
-}
+      // 위험 지역 표시 (원형)
+      dangerZones.forEach(function(zone) {
+        var circle = new kakao.maps.Circle({
+          center: new kakao.maps.LatLng(zone.lat, zone.lng),
+          radius: zone.radius,
+          strokeWeight: 2,
+          strokeColor: zone.color,
+          strokeOpacity: 0.8,
+          strokeStyle: 'solid',
+          fillColor: zone.color,
+          fillOpacity: 0.3
+        });
+        circle.setMap(map);
+      });
 
-// 모바일용 실제 지도 컴포넌트
-function MobileMapView({ missingPersons }) {
-  // react-native-maps를 동적으로 import하려고 시도
-  let MapView, Marker, Callout;
+      // 마커 표시
+      markers.forEach(function(markerData) {
+        var markerPosition = new kakao.maps.LatLng(markerData.lat, markerData.lng);
 
-  try {
-    const maps = require('react-native-maps');
-    MapView = maps.default;
-    Marker = maps.Marker;
-    Callout = maps.Callout;
-  } catch (e) {
-    // react-native-maps가 설치되지 않은 경우
-    return (
-      <View style={styles.centered}>
-        <Text style={styles.installText}>📦 지도 기능 설치 필요</Text>
-        <Text style={styles.installSubtext}>
-          다음 명령어를 실행하세요:{'\n\n'}
-          npx expo install react-native-maps
-        </Text>
-      </View>
-    );
-  }
+        // 마커 이미지 생성
+        var imageSrc = markerData.status === 'missing'
+          ? 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png'
+          : 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMzUiIHZpZXdCb3g9IjAgMCAyNCAzNSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTIgMEMxOC42MjcgMCAyNCA1LjM3MyAyNCAxMkMyNCAyMS43NSAxMiAzNSAxMiAzNUMxMiAzNSAwIDIxLjc1IDAgMTJDMCA1LjM3MyA1LjM3MyAwIDEyIDBaIiBmaWxsPSIjMzRDNzU5Ii8+PC9zdmc+';
 
-  // 지도 중심 계산 (위도/경도가 있는 실종자들의 평균)
-  const validPersons = missingPersons.filter(
-    (p) => p.latitude && p.longitude
-  );
+        var imageSize = new kakao.maps.Size(24, 35);
+        var markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize);
 
-  if (validPersons.length === 0) {
-    return (
-      <View style={styles.centered}>
-        <Text style={styles.emptyText}>위치 정보가 있는 데이터가 없습니다</Text>
-      </View>
-    );
-  }
+        var marker = new kakao.maps.Marker({
+          position: markerPosition,
+          image: markerImage
+        });
 
-  const avgLat =
-    validPersons.reduce((sum, p) => sum + p.latitude, 0) / validPersons.length;
-  const avgLng =
-    validPersons.reduce((sum, p) => sum + p.longitude, 0) / validPersons.length;
+        marker.setMap(map);
 
-  return (
-    <MapView
-      style={styles.map}
-      initialRegion={{
-        latitude: avgLat,
-        longitude: avgLng,
-        latitudeDelta: 2.0,
-        longitudeDelta: 2.0,
-      }}
-    >
-      {validPersons.map((person) => {
-        const isMissing = person.status === 'missing';
-        const pinColor = isMissing ? '#FF3B30' : '#34C759';
+        // 커스텀 오버레이
+        var content = '<div class="custom-overlay">' +
+          '<div class="title">' + (markerData.status === 'missing' ? '🔴 실종 중' : '🟢 실종 해제') + '</div>' +
+          '<div class="info">' + markerData.address + '</div>' +
+          '<div class="info">' + markerData.date + '</div>' +
+          (markerData.personInfo ? '<div class="info">' + markerData.personInfo + '</div>' : '') +
+          '</div>';
 
-        return (
-          <Marker
-            key={person.id}
-            coordinate={{
-              latitude: person.latitude,
-              longitude: person.longitude,
-            }}
-            pinColor={pinColor}
-            title={person.location_address}
-          >
-            <Callout style={styles.callout}>
-              <View style={styles.calloutContent}>
-                <Text style={styles.calloutTitle}>
-                  {isMissing ? '🔴 실종 중' : '🟢 실종 해제'}
-                </Text>
-                <Text style={styles.calloutAddress}>{person.location_address}</Text>
-                <Text style={styles.calloutDate}>
-                  실종: {new Date(person.missing_date).toLocaleDateString('ko-KR')}
-                </Text>
-                {person.age && person.gender && (
-                  <Text style={styles.calloutInfo}>
-                    {person.gender === 'M' ? '남성' : '여성'} · {person.age}세
-                  </Text>
-                )}
-                {!isMissing && person.resolved_at && (
-                  <Text style={styles.calloutResolved}>
-                    해제: {new Date(person.resolved_at).toLocaleDateString('ko-KR')}
-                  </Text>
-                )}
-              </View>
-            </Callout>
-          </Marker>
-        );
-      })}
-    </MapView>
-  );
-}
+        var customOverlay = new kakao.maps.CustomOverlay({
+          position: markerPosition,
+          content: content,
+          yAnchor: 1
+        });
+
+        // 마커 클릭 이벤트
+        kakao.maps.event.addListener(marker, 'click', function() {
+          customOverlay.setMap(map);
+        });
+
+        // 지도 클릭 시 오버레이 닫기
+        kakao.maps.event.addListener(map, 'click', function() {
+          customOverlay.setMap(null);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
+  `;
+};
 
 export default function MapScreen() {
   const [missingPersons, setMissingPersons] = useState([]);
@@ -177,13 +204,73 @@ export default function MapScreen() {
   const [activeTab, setActiveTab] = useState<'all' | 'missing' | 'resolved'>('all');
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState<any>({});
+  const webViewRef = useRef(null);
+
+  // 위험도 계산 함수
+  const calculateDangerZones = (persons: any[]) => {
+    // 위치가 있는 실종 중인 사람들만 필터
+    const missingWithLocation = persons.filter(
+      (p) => p.status === 'missing' && p.latitude && p.longitude
+    );
+
+    if (missingWithLocation.length === 0) return [];
+
+    // 지역별로 그룹화 (0.05도 단위 ≈ 약 5km)
+    const gridSize = 0.05;
+    const grid: { [key: string]: any[] } = {};
+
+    missingWithLocation.forEach((person) => {
+      const gridLat = Math.floor(person.latitude / gridSize) * gridSize;
+      const gridLng = Math.floor(person.longitude / gridSize) * gridSize;
+      const key = `${gridLat},${gridLng}`;
+
+      if (!grid[key]) {
+        grid[key] = [];
+      }
+      grid[key].push(person);
+    });
+
+    // 위험도 계산
+    const dangerZones = Object.entries(grid)
+      .filter(([_, persons]) => persons.length >= 2) // 2건 이상인 지역만
+      .map(([key, persons]) => {
+        const [lat, lng] = key.split(',').map(Number);
+        const count = persons.length;
+
+        // 위험도 레벨 결정
+        let color = '#FFFF00'; // 노랑 (저위험)
+        let radius = 3000; // 3km
+
+        if (count >= 5) {
+          color = '#FF0000'; // 빨강 (고위험)
+          radius = 5000; // 5km
+        } else if (count >= 3) {
+          color = '#FFA500'; // 주황 (중위험)
+          radius = 4000; // 4km
+        }
+
+        // 실제 중심 계산
+        const centerLat = persons.reduce((sum, p) => sum + p.latitude, 0) / count;
+        const centerLng = persons.reduce((sum, p) => sum + p.longitude, 0) / count;
+
+        return {
+          lat: centerLat,
+          lng: centerLng,
+          radius,
+          color,
+          count,
+        };
+      });
+
+    return dangerZones;
+  };
 
   // 데이터 로드 함수
   const loadData = async (status = 'all', filters = {}) => {
     try {
       setLoading(true);
       const params: any = {
-        limit: 500, // 지도에서는 더 많은 데이터 표시
+        limit: 500,
         status: status === 'all' ? undefined : status,
       };
 
@@ -227,6 +314,21 @@ export default function MapScreen() {
   const activeFilterCount = Object.keys(advancedFilters).filter(
     (key) => advancedFilters[key] !== undefined && advancedFilters[key] !== null
   ).length;
+
+  // 마커 데이터 준비
+  const markers = missingPersons
+    .filter((p) => p.latitude && p.longitude)
+    .map((p) => ({
+      lat: p.latitude,
+      lng: p.longitude,
+      status: p.status,
+      address: p.location_address,
+      date: new Date(p.missing_date).toLocaleDateString('ko-KR'),
+      personInfo: p.age && p.gender ? `${p.gender === 'M' ? '남성' : '여성'} · ${p.age}세` : null,
+    }));
+
+  // 위험 지역 계산
+  const dangerZones = calculateDangerZones(missingPersons);
 
   if (loading) {
     return (
@@ -295,21 +397,30 @@ export default function MapScreen() {
       {/* 통계 오버레이 */}
       <View style={styles.statsOverlay}>
         <Text style={styles.statsText}>
-          📍 전체 {missingPersons.length}건 · 위치 정보 {withLocationCount}건
+          📍 전체 {missingPersons.length}건 · 지도 표시 {withLocationCount}건
         </Text>
         <View style={styles.statsRow}>
           <Text style={styles.statsMissing}>🔴 실종 중: {missingCount}</Text>
           <Text style={styles.statsResolved}>🟢 해제: {resolvedCount}</Text>
+          <Text style={styles.statsDanger}>⚠️ 위험 지역: {dangerZones.length}</Text>
         </View>
       </View>
 
-      {/* 지도 또는 리스트 */}
+      {/* Kakao Map WebView */}
       {missingPersons.length > 0 ? (
-        isWeb ? (
-          <WebMapView missingPersons={missingPersons} />
-        ) : (
-          <MobileMapView missingPersons={missingPersons} />
-        )
+        <WebView
+          ref={webViewRef}
+          source={{ html: getKakaoMapHTML(markers, dangerZones) }}
+          style={styles.webView}
+          javaScriptEnabled={true}
+          domStorageEnabled={true}
+          startInLoadingState={true}
+          renderLoading={() => (
+            <View style={styles.centered}>
+              <ActivityIndicator size="large" color="#007AFF" />
+            </View>
+          )}
+        />
       ) : (
         <View style={styles.centered}>
           <Text style={styles.emptyText}>표시할 데이터가 없습니다</Text>
@@ -412,163 +523,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statsText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: '#fff',
     marginBottom: 4,
   },
   statsRow: {
     flexDirection: 'row',
-    gap: 16,
+    gap: 12,
   },
   statsMissing: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
     color: '#FFCCCB',
   },
   statsResolved: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
     color: '#C8E6C9',
   },
-
-  // 지도
-  map: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
+  statsDanger: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FFE082',
   },
 
-  // 마커 Callout
-  callout: {
-    width: 200,
-    padding: 0,
-  },
-  calloutContent: {
-    padding: 10,
-  },
-  calloutTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 6,
-  },
-  calloutAddress: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#333',
-    marginBottom: 4,
-  },
-  calloutDate: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 2,
-  },
-  calloutInfo: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 2,
-  },
-  calloutResolved: {
-    fontSize: 12,
-    color: '#34C759',
-    fontWeight: '600',
-    marginTop: 4,
+  // WebView
+  webView: {
+    flex: 1,
   },
 
-  // 웹 지도
-  webMapContainer: {
-    flex: 1,
-  },
-  webMapHeader: {
-    backgroundColor: '#E3F2FD',
-    padding: 20,
-    alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: '#2196F3',
-  },
-  webMapTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1565C0',
-    marginBottom: 8,
-  },
-  webMapSubtitle: {
-    fontSize: 14,
-    color: '#1976D2',
-  },
-  statusSummary: {
-    flexDirection: 'row',
-    gap: 15,
-    marginTop: 12,
-  },
-  statusMissing: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#C62828',
-  },
-  statusResolved: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#2E7D32',
-  },
-  locationGrid: {
-    padding: 15,
-  },
-  locationCard: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-    borderLeftWidth: 4,
-  },
-  locationNumber: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 15,
-  },
-  locationNumberText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  locationInfo: {
-    flex: 1,
-  },
-  locationAddress: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 6,
-  },
-  locationDate: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 4,
-  },
-  personInfo: {
-    fontSize: 13,
-    color: '#666',
-    marginBottom: 4,
-  },
-  resolvedDate: {
-    fontSize: 14,
-    color: '#4CAF50',
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  locationCoords: {
-    fontSize: 12,
-    color: '#999',
-  },
   emptyText: {
     fontSize: 18,
     color: '#666',
@@ -581,17 +565,5 @@ const styles = StyleSheet.create({
     color: '#999',
     textAlign: 'center',
     lineHeight: 20,
-  },
-  installText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 16,
-  },
-  installSubtext: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    lineHeight: 22,
   },
 });

@@ -50,6 +50,11 @@ export default function ListScreen() {
         params.age_max = filters.ageMax;
       }
 
+      // 장애 필터
+      if (filters.hasDisability !== undefined) {
+        params.has_disability = filters.hasDisability;
+      }
+
       const data = await api.getMissingPersons(params);
       
       // API 응답 형식 처리

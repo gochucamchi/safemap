@@ -5,7 +5,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_
+from sqlalchemy import func, and_, or_
 from typing import List, Optional
 from datetime import datetime, timedelta
 import os
@@ -38,6 +38,7 @@ async def get_missing_persons(
     gender: Optional[str] = Query(None, description="성별 필터 (M/F)", regex="^(M|F)$"),
     age_min: Optional[int] = Query(None, ge=0, le=150, description="최소 나이"),
     age_max: Optional[int] = Query(None, ge=0, le=150, description="최대 나이"),
+    has_disability: Optional[bool] = Query(None, description="장애 여부 (true: 장애 있음, false: 장애 없음)"),
     db: Session = Depends(get_db)
 ):
     """
@@ -56,6 +57,7 @@ async def get_missing_persons(
     추가 필터:
     - gender=M/F → 성별 필터
     - age_min=10&age_max=20 → 나이 범위
+    - has_disability=true/false → 장애 여부 (location_detail에서 "장애" 키워드 검색)
     """
     query = db.query(MissingPerson)
 
@@ -102,6 +104,18 @@ async def get_missing_persons(
         query = query.filter(MissingPerson.age >= age_min)
     if age_max is not None:
         query = query.filter(MissingPerson.age <= age_max)
+
+    # ✅ 장애 필터 적용
+    if has_disability is not None:
+        if has_disability:
+            # 장애 키워드가 포함된 경우만
+            query = query.filter(MissingPerson.location_detail.like('%장애%'))
+        else:
+            # 장애 키워드가 없는 경우만
+            query = query.filter(
+                ~MissingPerson.location_detail.like('%장애%') |
+                MissingPerson.location_detail.is_(None)
+            )
 
     # 정렬 및 페이징
     persons = query.order_by(MissingPerson.missing_date.desc())\

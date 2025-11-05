@@ -16,13 +16,15 @@ export default function ListScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedDays, setSelectedDays] = useState(30);
+  const [activeTab, setActiveTab] = useState<'missing' | 'resolved'>('missing');
 
-  // 데이터 로드 (날짜 필터 적용)
-  const loadData = async (days = 30) => {
+  // 데이터 로드 (날짜 필터 + 상태 필터 적용)
+  const loadData = async (days = 30, status = 'missing') => {
     try {
-      const data = await api.getMissingPersons({ 
+      const data = await api.getMissingPersons({
         limit: 100,
-        days: days
+        days: days,
+        status: status
       });
       
       // API 응답 형식 처리
@@ -41,57 +43,74 @@ export default function ListScreen() {
     }
   };
 
-  // selectedDays가 변경되면 데이터 다시 로드
+  // selectedDays 또는 activeTab이 변경되면 데이터 다시 로드
   useEffect(() => {
-    loadData(selectedDays);
-  }, [selectedDays]);
+    loadData(selectedDays, activeTab);
+  }, [selectedDays, activeTab]);
 
   // 날짜 필터 변경 핸들러
   const handleFilterChange = (days) => {
     setSelectedDays(days);
   };
 
+  // 탭 변경 핸들러
+  const handleTabChange = (tab: 'missing' | 'resolved') => {
+    setActiveTab(tab);
+  };
+
   // 새로고침 핸들러
   const onRefresh = () => {
     setRefreshing(true);
-    loadData(selectedDays);
+    loadData(selectedDays, activeTab);
   };
 
   // 리스트 아이템 렌더링
-  const renderItem = ({ item }) => (
-    <TouchableOpacity style={styles.card}>
-      <View style={styles.cardHeader}>
-        <Text style={styles.date}>
-          {new Date(item.missing_date).toLocaleDateString('ko-KR', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-          })}
-        </Text>
-        <View style={[styles.badge, styles.missingBadge]}>
-          <Text style={styles.badgeText}>실종</Text>
+  const renderItem = ({ item }) => {
+    const isMissing = item.status === 'missing';
+
+    return (
+      <TouchableOpacity style={styles.card}>
+        <View style={styles.cardHeader}>
+          <Text style={styles.date}>
+            {new Date(item.missing_date).toLocaleDateString('ko-KR', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            })}
+          </Text>
+          <View style={[styles.badge, isMissing ? styles.missingBadge : styles.resolvedBadge]}>
+            <Text style={styles.badgeText}>
+              {isMissing ? '실종 중' : '실종 해제'}
+            </Text>
+          </View>
         </View>
-      </View>
-      
-      <View style={styles.cardBody}>
-        <Text style={styles.location} numberOfLines={2}>
-          📍 {item.location_address}
-        </Text>
-        
-        {item.age && item.gender && (
-          <Text style={styles.info}>
-            {item.gender === 'M' ? '남성' : '여성'} · {item.age}세
+
+        <View style={styles.cardBody}>
+          <Text style={styles.location} numberOfLines={2}>
+            📍 {item.location_address}
           </Text>
-        )}
-        
-        {item.location_detail && (
-          <Text style={styles.detail} numberOfLines={2}>
-            {item.location_detail}
-          </Text>
-        )}
-      </View>
-    </TouchableOpacity>
-  );
+
+          {item.age && item.gender && (
+            <Text style={styles.info}>
+              {item.gender === 'M' ? '남성' : '여성'} · {item.age}세
+            </Text>
+          )}
+
+          {item.location_detail && (
+            <Text style={styles.detail} numberOfLines={2}>
+              {item.location_detail}
+            </Text>
+          )}
+
+          {!isMissing && item.resolved_at && (
+            <Text style={styles.resolvedDate}>
+              ✓ {new Date(item.resolved_at).toLocaleDateString('ko-KR')} 실종 해제
+            </Text>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   if (loading) {
     return (
@@ -103,8 +122,28 @@ export default function ListScreen() {
 
   return (
     <View style={styles.container}>
+      {/* 탭 메뉴 */}
+      <View style={styles.tabContainer}>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'missing' && styles.tabActive]}
+          onPress={() => handleTabChange('missing')}
+        >
+          <Text style={[styles.tabText, activeTab === 'missing' && styles.tabTextActive]}>
+            실종 중
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'resolved' && styles.tabActive]}
+          onPress={() => handleTabChange('resolved')}
+        >
+          <Text style={[styles.tabText, activeTab === 'resolved' && styles.tabTextActive]}>
+            실종 해제
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       {/* DateFilter 추가 */}
-      <DateFilter 
+      <DateFilter
         onFilterChange={handleFilterChange}
         initialDays={30}
       />
@@ -113,7 +152,7 @@ export default function ListScreen() {
       {missingPersons.length > 0 && (
         <View style={styles.resultBar}>
           <Text style={styles.resultText}>
-            총 {missingPersons.length}건의 실종 사건
+            총 {missingPersons.length}건
           </Text>
         </View>
       )}
@@ -150,6 +189,32 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  // 탭
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5EA',
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 16,
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  tabActive: {
+    borderBottomColor: '#007AFF',
+  },
+  tabText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#8E8E93',
+  },
+  tabTextActive: {
+    color: '#007AFF',
+    fontWeight: '600',
   },
   resultBar: {
     backgroundColor: '#fff',
@@ -196,6 +261,9 @@ const styles = StyleSheet.create({
   missingBadge: {
     backgroundColor: '#FF3B30',
   },
+  resolvedBadge: {
+    backgroundColor: '#34C759',
+  },
   badgeText: {
     color: '#fff',
     fontSize: 12,
@@ -218,6 +286,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#999',
     lineHeight: 20,
+  },
+  resolvedDate: {
+    fontSize: 13,
+    color: '#34C759',
+    fontWeight: '600',
+    marginTop: 4,
   },
   emptyText: {
     fontSize: 18,

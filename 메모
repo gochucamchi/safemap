@@ -26,3 +26,7 @@ bashcurl http://localhost:8000/api/v1/sync/status
 bashcurl -X POST http://localhost:8000/api/v1/sync/trigger
 3. DB 통계
 bashcurl http://localhost:8000/api/v1/db/stats
+
+git 다른 브런치 내용 여기로 가져와서 융합시키기
+git fetch origin claude/check-github-project-011CUppXPdU9cT9A1o3Nv5nc
+git merge origin/claude/check-github-project-011CUppXPdU9cT9A1o3Nv5nc

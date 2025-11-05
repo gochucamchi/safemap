@@ -108,7 +108,7 @@ const getKakaoMapHTML = (markers: any[], dangerZones: any[]) => {
       margin-right: 6px;
     }
   </style>
-  <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=YOUR_APP_KEY&libraries=clusterer"></script>
+  <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=ab5b40a00e8f67e5d459b80cd7d36466&libraries=clusterer&autoload=false"></script>
 </head>
 <body>
   <div id="map"></div>
@@ -136,12 +136,19 @@ const getKakaoMapHTML = (markers: any[], dangerZones: any[]) => {
     </div>
   </div>
   <script>
-    // Kakao Maps API Key가 없으면 경고 표시
-    if (typeof kakao === 'undefined') {
-      document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;text-align:center;padding:20px;"><div><h2>⚠️ Kakao Maps API 키 필요</h2><p style="margin-top:10px;color:#666;">Kakao Developers에서 앱 키를 발급받아 YOUR_APP_KEY를 교체하세요</p></div></div>';
-    } else {
-      var markers = ${JSON.stringify(markers)};
-      var dangerZones = ${JSON.stringify(dangerZones)};
+    // 데이터 준비
+    var markers = ${JSON.stringify(markers)};
+    var dangerZones = ${JSON.stringify(dangerZones)};
+
+    // Kakao Maps SDK 로드 대기 및 초기화
+    function initializeMap() {
+      if (typeof kakao === 'undefined' || !kakao.maps) {
+        setTimeout(initializeMap, 100);
+        return;
+      }
+
+      // kakao.maps.load를 사용하여 완전히 로드될 때까지 대기
+      kakao.maps.load(function() {
 
       // 지도 중심 계산
       var centerLat = markers.length > 0
@@ -217,7 +224,11 @@ const getKakaoMapHTML = (markers: any[], dangerZones: any[]) => {
           customOverlay.setMap(null);
         });
       });
-    }
+      }); // kakao.maps.load 콜백 종료
+    } // initializeMap 함수 종료
+
+    // 지도 초기화 시작
+    initializeMap();
   </script>
 </body>
 </html>

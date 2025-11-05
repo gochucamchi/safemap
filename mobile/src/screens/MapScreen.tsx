@@ -118,6 +118,7 @@ const getKakaoMapHTML = (markers: any[], dangerZones: any[]) => {
       <div class="legend-color" style="background: rgba(255, 0, 0, 0.4); border: 2px solid #FF0000;"></div>
       <span>고위험 지역</span>
     </div>
+    
     <div class="legend-item">
       <div class="legend-color" style="background: rgba(255, 165, 0, 0.4); border: 2px solid #FFA500;"></div>
       <span>중위험 지역</span>

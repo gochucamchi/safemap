@@ -5,10 +5,37 @@ import {
   ActivityIndicator,
   Text,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
-import { WebView } from 'react-native-webview';
 import { api } from '../services/api';
 import AdvancedFilterModal from '../components/AdvancedFilterModal';
+
+// Platform별 WebView import
+let WebView: any = null;
+if (Platform.OS !== 'web') {
+  try {
+    WebView = require('react-native-webview').WebView;
+  } catch (e) {
+    console.log('WebView not available');
+  }
+}
+
+// 웹 전용 지도 컴포넌트 (iframe 사용)
+const WebMapComponent = ({ html }: { html: string }) => {
+  if (Platform.OS !== 'web') return null;
+
+  // @ts-ignore - iframe은 웹에서만 사용
+  return React.createElement('iframe', {
+    srcDoc: html,
+    style: {
+      flex: 1,
+      width: '100%',
+      height: '100%',
+      border: 'none',
+    },
+    title: 'Kakao Map',
+  });
+};
 
 // Kakao Maps HTML 템플릿
 const getKakaoMapHTML = (markers: any[], dangerZones: any[]) => {
@@ -406,21 +433,35 @@ export default function MapScreen() {
         </View>
       </View>
 
-      {/* Kakao Map WebView */}
+      {/* Kakao Map */}
       {missingPersons.length > 0 ? (
-        <WebView
-          ref={webViewRef}
-          source={{ html: getKakaoMapHTML(markers, dangerZones) }}
-          style={styles.webView}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
-          startInLoadingState={true}
-          renderLoading={() => (
-            <View style={styles.centered}>
-              <ActivityIndicator size="large" color="#007AFF" />
-            </View>
-          )}
-        />
+        Platform.OS === 'web' ? (
+          // 웹에서는 HTML을 직접 렌더링
+          <WebMapComponent html={getKakaoMapHTML(markers, dangerZones)} />
+        ) : WebView ? (
+          // 모바일에서는 WebView 사용
+          <WebView
+            ref={webViewRef}
+            source={{ html: getKakaoMapHTML(markers, dangerZones) }}
+            style={styles.webView}
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+            startInLoadingState={true}
+            renderLoading={() => (
+              <View style={styles.centered}>
+                <ActivityIndicator size="large" color="#007AFF" />
+              </View>
+            )}
+          />
+        ) : (
+          // WebView가 설치되지 않은 경우
+          <View style={styles.centered}>
+            <Text style={styles.errorText}>📦 WebView 패키지 필요</Text>
+            <Text style={styles.emptySubtext}>
+              npx expo install react-native-webview
+            </Text>
+          </View>
+        )
       ) : (
         <View style={styles.centered}>
           <Text style={styles.emptyText}>표시할 데이터가 없습니다</Text>

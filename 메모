@@ -1,0 +1,28 @@
+npm start
+
+------------------------------------------------------------------
+source venv/bin/activate
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+-------------------------------------------------------------------
+
+Step 2: 데이터 동기화 (선택사항)
+안전Dream API 키가 있다면:
+bash# 새 터미널 2
+w
+source venv/bin/activate
+
+# .env 파일 편집
+nano .env
+# SAFE_DREAM_API_KEY=여기에_API_키_입력
+
+# 데이터 동기화
+curl -X POST http://localhost:8000/api/v1/sync/missing-persons
+
+python quick_test.py
+
+1. 상태 확인
+bashcurl http://localhost:8000/api/v1/sync/status
+2. 수동 동기화
+bashcurl -X POST http://localhost:8000/api/v1/sync/trigger
+3. DB 통계
+bashcurl http://localhost:8000/api/v1/db/stats

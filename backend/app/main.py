@@ -1,56 +1,242 @@
+# -*- coding: utf-8 -*-
+"""
+SafeMap API Server
+- 서버 시작 시 자동 데이터 동기화
+- 30분마다 자동 갱신
+"""
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+import os
+import asyncio
 
+# ✅ .env 파일 로드
+from dotenv import load_dotenv
+load_dotenv()
+
+from app.database.db import engine, Base
 from app.api import missing_persons
-from app.database.db import init_db
+
+
+# 자동 동기화 매니저
+class AutoSyncManager:
+    """자동 동기화 매니저 (30분마다)"""
+    
+    def __init__(self, api_key: str, esntl_id: str = "10000855"):
+        self.api_key = api_key
+        self.esntl_id = esntl_id
+        self.task = None
+        self.is_running = False
+    
+    async def start(self):
+        """자동 동기화 시작"""
+        print("🚀 자동 동기화 시작 (30분 간격)")
+        self.is_running = True
+        self.task = asyncio.create_task(self._sync_loop())
+    
+    async def stop(self):
+        """자동 동기화 중지"""
+        print("⏹️  자동 동기화 중지")
+        self.is_running = False
+        if self.task:
+            self.task.cancel()
+            try:
+                await self.task
+            except asyncio.CancelledError:
+                pass
+    
+    async def _sync_loop(self):
+        """동기화 루프"""
+        # 서버 시작 즉시 첫 동기화
+        await self._run_sync()
+        
+        # 30분마다 반복
+        while self.is_running:
+            try:
+                await asyncio.sleep(30 * 60)  # 30분
+                
+                if self.is_running:
+                    print("\n⏰ 정기 동기화 시작 (30분 경과)")
+                    await self._run_sync()
+            
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                print(f"❌ 자동 동기화 오류: {e}")
+                await asyncio.sleep(60)
+    
+    async def _run_sync(self):
+        """동기화 실행"""
+        try:
+            from app.services.data_sync_service import DataSyncService
+            
+            service = DataSyncService(
+                api_key=self.api_key,
+                esntl_id=self.esntl_id
+            )
+            
+            result = await service.sync_all_data(max_pages=50)
+            
+            if result["success"]:
+                stats = service.get_statistics()
+                print(f"\n📊 현재 DB: {stats['total_count']}건")
+            
+        except Exception as e:
+            print(f"❌ 동기화 실패: {e}")
+            import traceback
+            traceback.print_exc()
+
+
+# 전역 변수
+sync_manager = None
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """애플리케이션 시작/종료 시 실행"""
+    """
+    서버 생명주기 관리
+    """
+    global sync_manager
+    
+    print("\n" + "="*60)
     print("🚀 Starting SafeMap API Server...")
+    print("="*60)
+    
+    # 1. 데이터베이스 초기화
     print("📍 Environment: Development")
-    init_db()
+    Base.metadata.create_all(bind=engine)
     print("✅ Database initialized")
+    
+    # 2. 자동 동기화 시작
+    api_key = os.getenv("SAFE_DREAM_API_KEY")
+    esntl_id = os.getenv("SAFE_DREAM_ESNTL_ID", "10000855")
+    
+    if api_key:
+        print(f"🔑 API Key found: {api_key[:10]}...")
+        print(f"👤 Esntl ID: {esntl_id}")
+        print("🔄 Initializing auto-sync service...")
+        sync_manager = AutoSyncManager(api_key, esntl_id)
+        await sync_manager.start()
+        print("✅ Auto-sync enabled (30-minute interval)")
+    else:
+        print("⚠️  SAFE_DREAM_API_KEY not found - auto-sync disabled")
+        print("   Set the API key in .env file to enable auto-sync")
+    
+    print("="*60)
+    print("✅ Server ready!")
+    print("="*60 + "\n")
+    
+    # 서버 실행
     yield
+    
+    # 서버 종료 시
+    print("\n" + "="*60)
     print("👋 Shutting down SafeMap API Server...")
+    print("="*60)
+    
+    if sync_manager:
+        await sync_manager.stop()
+        print("✅ Auto-sync stopped")
+    
+    print("="*60)
+    print("✅ Server shutdown complete")
+    print("="*60 + "\n")
 
+
+# FastAPI 앱 생성
 app = FastAPI(
     title="SafeMap API",
-    description="실시간 안전 지도 API - 실종자 정보 제공",
+    description="실종자 정보 및 안전시설 API",
     version="1.0.0",
     lifespan=lifespan
 )
 
-# ⭐ CORS 설정 - 매우 중요!
+# CORS 설정
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 모든 origin 허용 (개발 중)
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # 라우터 등록
-app.include_router(missing_persons.router, prefix="/api/v1", tags=["Missing Persons"])
+app.include_router(
+    missing_persons.router,
+    prefix="/api/v1",
+    tags=["missing-persons"]
+)
 
+
+# 루트 엔드포인트
 @app.get("/")
 async def root():
+    """API 루트"""
     return {
-        "message": "Welcome to SafeMap API",
-        "docs": "/docs",
-        "version": "1.0.0"
-    }
-
-@app.get("/api/info")
-async def api_info():
-    return {
-        "name": "SafeMap API",
+        "service": "SafeMap API",
         "version": "1.0.0",
-        "endpoints": {
-            "missing_persons": "/api/v1/missing-persons",
-            "statistics": "/api/v1/missing-persons/stats",
-            "health": "/api/v1/health",
-            "sync": "/api/v1/sync/missing-persons"
+        "status": "running",
+        "features": {
+            "auto_sync": sync_manager is not None,
+            "sync_interval": "30 minutes" if sync_manager else None
         }
     }
+
+
+# 동기화 상태 확인
+@app.get("/api/v1/sync/status")
+async def sync_status():
+    """자동 동기화 상태 확인"""
+    if not sync_manager:
+        return {
+            "enabled": False,
+            "message": "Auto-sync is disabled. Set SAFE_DREAM_API_KEY to enable."
+        }
+    
+    return {
+        "enabled": True,
+        "is_running": sync_manager.is_running,
+        "interval": "30 minutes",
+        "last_sync": "Check server logs"
+    }
+
+
+# 수동 동기화 트리거
+@app.post("/api/v1/sync/trigger")
+async def trigger_sync():
+    """수동으로 동기화 실행"""
+    if not sync_manager:
+        return {
+            "success": False,
+            "message": "Auto-sync is not configured"
+        }
+    
+    print("\n🔄 수동 동기화 요청")
+    
+    try:
+        from app.services.data_sync_service import DataSyncService
+        
+        service = DataSyncService(
+            api_key=sync_manager.api_key,
+            esntl_id=sync_manager.esntl_id
+        )
+        
+        result = await service.sync_all_data(max_pages=50)
+        return result
+    
+    except Exception as e:
+        return {
+            "success": False,
+            "message": str(e)
+        }
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        "app.main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True
+    )

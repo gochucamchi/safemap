@@ -28,5 +28,7 @@ bashcurl -X POST http://localhost:8000/api/v1/sync/trigger
 bashcurl http://localhost:8000/api/v1/db/stats
 
 git 다른 브런치 내용 여기로 가져와서 융합시키기
+git add .
+git commit -m "커밋 메시지"
 git fetch origin claude/check-github-project-011CUppXPdU9cT9A1o3Nv5nc
 git merge origin/claude/check-github-project-011CUppXPdU9cT9A1o3Nv5nc

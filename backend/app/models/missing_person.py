@@ -6,7 +6,7 @@ Base = declarative_base()
 class MissingPerson(Base):
     """실종자 정보 모델"""
     __tablename__ = "missing_persons"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     external_id = Column(String, unique=True, index=True)  # 실종자식별코드
     missing_date = Column(DateTime)  # 발생일시
@@ -16,5 +16,7 @@ class MissingPerson(Base):
     gender = Column(String(1), nullable=True)  # 성별 (M/F)
     latitude = Column(Float, nullable=True)  # 위도
     longitude = Column(Float, nullable=True)  # 경도
+    status = Column(String(20), default="missing", index=True)  # 상태 (missing/resolved)
+    resolved_at = Column(DateTime, nullable=True)  # 실종 해제 일시
     created_at = Column(DateTime)  # 생성일시
     updated_at = Column(DateTime)  # 수정일시

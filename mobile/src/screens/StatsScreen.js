@@ -68,6 +68,38 @@ export default function StatsScreen() {
         <Text style={styles.mainCardSubtitle}>총 실종 사건</Text>
       </View>
 
+      {/* 상태별 통계 */}
+      {stats.status_statistics && (
+        <View style={styles.sectionCard}>
+          <Text style={styles.sectionTitle}>상태별 통계</Text>
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              <Text style={styles.statLabel}>🔴 실종 중</Text>
+              <Text style={[styles.statNumber, { color: '#FF3B30' }]}>
+                {stats.status_statistics?.missing || 0}
+              </Text>
+              <Text style={styles.statPercent}>
+                {stats.total_count > 0
+                  ? `${Math.round((stats.status_statistics?.missing || 0) / stats.total_count * 100)}%`
+                  : '0%'}
+              </Text>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statLabel}>🟢 실종 해제</Text>
+              <Text style={[styles.statNumber, { color: '#4CAF50' }]}>
+                {stats.status_statistics?.resolved || 0}
+              </Text>
+              <Text style={styles.statPercent}>
+                {stats.total_count > 0
+                  ? `${Math.round((stats.status_statistics?.resolved || 0) / stats.total_count * 100)}%`
+                  : '0%'}
+              </Text>
+            </View>
+          </View>
+        </View>
+      )}
+
       {/* 성별 통계 */}
       <View style={styles.sectionCard}>
         <Text style={styles.sectionTitle}>성별 통계</Text>

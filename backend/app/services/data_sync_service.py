@@ -42,6 +42,7 @@ class DataSyncService:
             "new_added": 0,
             "updated": 0,
             "skipped": 0,
+            "resolved": 0,  # 실종 해제
             "errors": [],
             "start_time": datetime.now(),
         }
@@ -127,15 +128,48 @@ class DataSyncService:
                 await asyncio.sleep(0.5)
             
             print(f"\n📊 총 {result['total_fetched']}건의 데이터 수신 완료")
-            
+
             # 예상 개수와 실제 개수 비교
             if total_count > 0 and result['total_fetched'] != total_count:
                 print(f"⚠️  예상 {total_count}건 vs 실제 {result['total_fetched']}건")
-            
+
+            # ✅ API에서 받아온 external_id 목록 수집
+            api_external_ids = set()
+            for item in all_persons:
+                parsed = self.api_client.parse_missing_person(item)
+                if parsed and parsed.get("external_id"):
+                    api_external_ids.add(parsed["external_id"])
+
+            print(f"\n🔍 API에서 받은 실종자 ID: {len(api_external_ids)}개")
+
+            # ✅ DB에서 현재 실종 중인 사람들의 ID 가져오기
+            current_missing = db.query(MissingPerson).filter(
+                MissingPerson.status == "missing"
+            ).all()
+
+            current_missing_ids = {p.external_id for p in current_missing}
+            print(f"📊 DB에 실종 중인 사람: {len(current_missing_ids)}명")
+
+            # ✅ API에 없지만 DB에는 실종 중으로 있는 사람들 = 실종 해제!
+            resolved_ids = current_missing_ids - api_external_ids
+            result["resolved"] = len(resolved_ids)
+
+            if resolved_ids:
+                print(f"\n🎉 실종 해제 감지: {len(resolved_ids)}명")
+                for person in current_missing:
+                    if person.external_id in resolved_ids:
+                        person.status = "resolved"
+                        person.resolved_at = datetime.now()
+                        person.updated_at = datetime.now()
+                        print(f"   ✅ 실종 해제: {person.location_address[:40]} (ID: {person.external_id})")
+                db.commit()
+            else:
+                print("\n📌 실종 해제된 사람 없음")
+
             print("\n" + "-"*60)
             print("💾 데이터베이스 저장 시작...")
             print("-"*60 + "\n")
-            
+
             for idx, item in enumerate(all_persons, 1):
                 try:
                     sync_result = self._sync_person(item, db)
@@ -176,6 +210,7 @@ class DataSyncService:
    • 전체 수신: {result['total_fetched']}건
    • 새로 추가: {result['new_added']}건
    • 업데이트: {result['updated']}건
+   • 실종 해제: {result['resolved']}건 🎉
    • 건너뜀: {result['skipped']}건
    • 에러: {len(result['errors'])}건
    • 소요 시간: {result['duration']:.2f}초
@@ -206,22 +241,29 @@ class DataSyncService:
     def _sync_person(self, item: Dict, db: Session) -> str:
         """개별 실종자 데이터 동기화"""
         parsed = self.api_client.parse_missing_person(item)
-        
+
         if not parsed or not parsed.get("external_id"):
             return "skipped"
-        
+
         existing = db.query(MissingPerson).filter(
             MissingPerson.external_id == parsed["external_id"]
         ).first()
-        
+
         if existing:
+            # 기존 데이터 업데이트
             for key, value in parsed.items():
                 setattr(existing, key, value)
+            # API에 다시 나타났으므로 실종 중으로 복원
+            existing.status = "missing"
+            existing.resolved_at = None
             existing.updated_at = datetime.now()
             return "updated"
         else:
+            # 새로운 실종자 추가
             new_person = MissingPerson(
                 **parsed,
+                status="missing",  # 기본값: 실종 중
+                resolved_at=None,
                 created_at=datetime.now(),
                 updated_at=datetime.now()
             )

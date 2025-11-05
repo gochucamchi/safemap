@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { api } from '../services/api';
 import DateFilter from '../components/DateFilter';
+import AdvancedFilterModal from '../components/AdvancedFilterModal';
 
 export default function ListScreen() {
   const [missingPersons, setMissingPersons] = useState([]);
@@ -17,15 +18,39 @@ export default function ListScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedDays, setSelectedDays] = useState(30);
   const [activeTab, setActiveTab] = useState<'missing' | 'resolved'>('missing');
+  const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
+  const [advancedFilters, setAdvancedFilters] = useState<any>({});
 
-  // 데이터 로드 (날짜 필터 + 상태 필터 적용)
-  const loadData = async (days = 30, status = 'missing') => {
+  // 데이터 로드 (모든 필터 적용)
+  const loadData = async (days = 30, status = 'missing', filters = {}) => {
     try {
-      const data = await api.getMissingPersons({
+      const params: any = {
         limit: 100,
-        days: days,
-        status: status
-      });
+        status: status,
+      };
+
+      // 날짜 필터: 고급 필터에서 직접 입력한 날짜가 있으면 우선 사용
+      if (filters.startDate && filters.endDate) {
+        params.start_date = filters.startDate;
+        params.end_date = filters.endDate;
+      } else if (days) {
+        params.days = days;
+      }
+
+      // 성별 필터
+      if (filters.gender) {
+        params.gender = filters.gender;
+      }
+
+      // 나이 필터
+      if (filters.ageMin !== undefined) {
+        params.age_min = filters.ageMin;
+      }
+      if (filters.ageMax !== undefined) {
+        params.age_max = filters.ageMax;
+      }
+
+      const data = await api.getMissingPersons(params);
       
       // API 응답 형식 처리
       const items = data.items || data;
@@ -43,10 +68,10 @@ export default function ListScreen() {
     }
   };
 
-  // selectedDays 또는 activeTab이 변경되면 데이터 다시 로드
+  // selectedDays, activeTab, advancedFilters가 변경되면 데이터 다시 로드
   useEffect(() => {
-    loadData(selectedDays, activeTab);
-  }, [selectedDays, activeTab]);
+    loadData(selectedDays, activeTab, advancedFilters);
+  }, [selectedDays, activeTab, advancedFilters]);
 
   // 날짜 필터 변경 핸들러
   const handleFilterChange = (days) => {
@@ -58,10 +83,15 @@ export default function ListScreen() {
     setActiveTab(tab);
   };
 
+  // 고급 필터 적용 핸들러
+  const handleAdvancedFilterApply = (filters) => {
+    setAdvancedFilters(filters);
+  };
+
   // 새로고침 핸들러
   const onRefresh = () => {
     setRefreshing(true);
-    loadData(selectedDays, activeTab);
+    loadData(selectedDays, activeTab, advancedFilters);
   };
 
   // 리스트 아이템 렌더링
@@ -120,6 +150,11 @@ export default function ListScreen() {
     );
   }
 
+  // 활성 필터 개수 계산
+  const activeFilterCount = Object.keys(advancedFilters).filter(
+    key => advancedFilters[key] !== undefined && advancedFilters[key] !== null
+  ).length;
+
   return (
     <View style={styles.container}>
       {/* 탭 메뉴 */}
@@ -142,11 +177,23 @@ export default function ListScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* DateFilter 추가 */}
-      <DateFilter
-        onFilterChange={handleFilterChange}
-        initialDays={30}
-      />
+      {/* 필터 바 */}
+      <View style={styles.filterBar}>
+        <DateFilter
+          onFilterChange={handleFilterChange}
+          initialDays={30}
+        />
+        <TouchableOpacity
+          style={styles.advancedFilterButton}
+          onPress={() => setShowAdvancedFilter(true)}
+        >
+          <Text style={styles.advancedFilterIcon}>⚙️</Text>
+          <Text style={styles.advancedFilterText}>
+            고급 필터
+            {activeFilterCount > 0 && ` (${activeFilterCount})`}
+          </Text>
+        </TouchableOpacity>
+      </View>
 
       {/* 결과 개수 표시 */}
       {missingPersons.length > 0 && (
@@ -176,6 +223,14 @@ export default function ListScreen() {
           }
         />
       )}
+
+      {/* 고급 필터 모달 */}
+      <AdvancedFilterModal
+        visible={showAdvancedFilter}
+        onClose={() => setShowAdvancedFilter(false)}
+        onApply={handleAdvancedFilterApply}
+        initialFilters={advancedFilters}
+      />
     </View>
   );
 }
@@ -189,6 +244,30 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  // 필터 바
+  filterBar: {
+    backgroundColor: '#fff',
+  },
+  advancedFilterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#F2F2F7',
+    marginHorizontal: 16,
+    marginVertical: 8,
+    borderRadius: 8,
+    gap: 8,
+  },
+  advancedFilterIcon: {
+    fontSize: 16,
+  },
+  advancedFilterText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#007AFF',
   },
   // 탭
   tabContainer: {

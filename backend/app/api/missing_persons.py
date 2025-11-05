@@ -35,6 +35,9 @@ async def get_missing_persons(
     days: Optional[int] = Query(None, ge=1, le=3650, description="최근 N일 데이터"),
     start_date: Optional[str] = Query(None, description="시작일 (YYYY-MM-DD)"),
     end_date: Optional[str] = Query(None, description="종료일 (YYYY-MM-DD)"),
+    gender: Optional[str] = Query(None, description="성별 필터 (M/F)", regex="^(M|F)$"),
+    age_min: Optional[int] = Query(None, ge=0, le=150, description="최소 나이"),
+    age_max: Optional[int] = Query(None, ge=0, le=150, description="최대 나이"),
     db: Session = Depends(get_db)
 ):
     """
@@ -49,6 +52,10 @@ async def get_missing_persons(
     1. days=30 → 최근 30일
     2. start_date=2024-01-01&end_date=2024-12-31 → 특정 기간
     3. 둘 다 없으면 → 전체 데이터
+
+    추가 필터:
+    - gender=M/F → 성별 필터
+    - age_min=10&age_max=20 → 나이 범위
     """
     query = db.query(MissingPerson)
 
@@ -85,6 +92,16 @@ async def get_missing_persons(
                 status_code=400,
                 detail="날짜 형식이 잘못되었습니다. YYYY-MM-DD 형식으로 입력하세요"
             )
+
+    # ✅ 성별 필터 적용
+    if gender:
+        query = query.filter(MissingPerson.gender == gender)
+
+    # ✅ 나이 필터 적용
+    if age_min is not None:
+        query = query.filter(MissingPerson.age >= age_min)
+    if age_max is not None:
+        query = query.filter(MissingPerson.age <= age_max)
 
     # 정렬 및 페이징
     persons = query.order_by(MissingPerson.missing_date.desc())\

@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Platform,
+  TextInput,
 } from 'react-native';
 
 interface FilterOptions {
@@ -15,6 +16,7 @@ interface FilterOptions {
   gender?: 'M' | 'F' | null;
   ageMin?: number;
   ageMax?: number;
+  hasDisability?: boolean | null;
 }
 
 interface AdvancedFilterModalProps {
@@ -39,8 +41,9 @@ const AdvancedFilterModal: React.FC<AdvancedFilterModalProps> = ({
   const [startDate, setStartDate] = useState(initialFilters.startDate || '');
   const [endDate, setEndDate] = useState(initialFilters.endDate || '');
   const [gender, setGender] = useState<'M' | 'F' | null>(initialFilters.gender || null);
-  const [ageMin, setAgeMin] = useState<number | undefined>(initialFilters.ageMin);
-  const [ageMax, setAgeMax] = useState<number | undefined>(initialFilters.ageMax);
+  const [ageMin, setAgeMin] = useState<string>(initialFilters.ageMin?.toString() || '');
+  const [ageMax, setAgeMax] = useState<string>(initialFilters.ageMax?.toString() || '');
+  const [hasDisability, setHasDisability] = useState<boolean | null>(initialFilters.hasDisability ?? null);
 
   // 날짜 선택 (간단한 버전 - 년/월/일 선택)
   const [showDatePicker, setShowDatePicker] = useState<'start' | 'end' | null>(null);
@@ -75,12 +78,16 @@ const AdvancedFilterModal: React.FC<AdvancedFilterModalProps> = ({
   };
 
   const handleApply = () => {
+    const ageMinNum = ageMin ? parseInt(ageMin) : undefined;
+    const ageMaxNum = ageMax ? parseInt(ageMax) : undefined;
+
     onApply({
       startDate: startDate || undefined,
       endDate: endDate || undefined,
       gender: gender || undefined,
-      ageMin: ageMin,
-      ageMax: ageMax,
+      ageMin: ageMinNum,
+      ageMax: ageMaxNum,
+      hasDisability: hasDisability ?? undefined,
     });
     onClose();
   };
@@ -89,14 +96,16 @@ const AdvancedFilterModal: React.FC<AdvancedFilterModalProps> = ({
     setStartDate('');
     setEndDate('');
     setGender(null);
-    setAgeMin(undefined);
-    setAgeMax(undefined);
+    setAgeMin('');
+    setAgeMax('');
+    setHasDisability(null);
   };
 
-  const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i);
+  // 1950년부터 현재까지
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: currentYear - 1950 + 1 }, (_, i) => currentYear - i);
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
   const days = Array.from({ length: 31 }, (_, i) => i + 1);
-  const ages = Array.from({ length: 101 }, (_, i) => i);
 
   return (
     <Modal
@@ -180,71 +189,62 @@ const AdvancedFilterModal: React.FC<AdvancedFilterModalProps> = ({
                 <View style={styles.ageRow}>
                   <View style={styles.ageInputContainer}>
                     <Text style={styles.ageLabel}>최소</Text>
-                    <TouchableOpacity
-                      style={styles.ageButton}
-                      onPress={() => {
-                        // 간단한 스크롤 선택기를 보여줄 수 있습니다
-                        // 여기서는 단순화를 위해 버튼으로 증감
+                    <TextInput
+                      style={styles.ageInput}
+                      placeholder="예: 10"
+                      placeholderTextColor="#8E8E93"
+                      keyboardType="number-pad"
+                      value={ageMin}
+                      onChangeText={(text) => {
+                        // 숫자만 입력되도록
+                        const numericText = text.replace(/[^0-9]/g, '');
+                        setAgeMin(numericText);
                       }}
-                    >
-                      <Text style={styles.ageButtonText}>
-                        {ageMin !== undefined ? `${ageMin}세` : '없음'}
-                      </Text>
-                    </TouchableOpacity>
-                    <View style={styles.ageControls}>
-                      <TouchableOpacity
-                        style={styles.ageControlButton}
-                        onPress={() => setAgeMin((ageMin || 0) > 0 ? (ageMin || 0) - 1 : 0)}
-                      >
-                        <Text style={styles.ageControlText}>−</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.ageControlButton}
-                        onPress={() => setAgeMin((ageMin || 0) + 1)}
-                      >
-                        <Text style={styles.ageControlText}>+</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.ageResetButton}
-                        onPress={() => setAgeMin(undefined)}
-                      >
-                        <Text style={styles.ageResetText}>✕</Text>
-                      </TouchableOpacity>
-                    </View>
+                      maxLength={3}
+                    />
                   </View>
 
                   <Text style={styles.ageSeparator}>~</Text>
 
                   <View style={styles.ageInputContainer}>
                     <Text style={styles.ageLabel}>최대</Text>
-                    <TouchableOpacity
-                      style={styles.ageButton}
-                    >
-                      <Text style={styles.ageButtonText}>
-                        {ageMax !== undefined ? `${ageMax}세` : '없음'}
-                      </Text>
-                    </TouchableOpacity>
-                    <View style={styles.ageControls}>
-                      <TouchableOpacity
-                        style={styles.ageControlButton}
-                        onPress={() => setAgeMax((ageMax || 1) > 0 ? (ageMax || 1) - 1 : 0)}
-                      >
-                        <Text style={styles.ageControlText}>−</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.ageControlButton}
-                        onPress={() => setAgeMax((ageMax || 0) + 1)}
-                      >
-                        <Text style={styles.ageControlText}>+</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.ageResetButton}
-                        onPress={() => setAgeMax(undefined)}
-                      >
-                        <Text style={styles.ageResetText}>✕</Text>
-                      </TouchableOpacity>
-                    </View>
+                    <TextInput
+                      style={styles.ageInput}
+                      placeholder="예: 90"
+                      placeholderTextColor="#8E8E93"
+                      keyboardType="number-pad"
+                      value={ageMax}
+                      onChangeText={(text) => {
+                        // 숫자만 입력되도록
+                        const numericText = text.replace(/[^0-9]/g, '');
+                        setAgeMax(numericText);
+                      }}
+                      maxLength={3}
+                    />
                   </View>
+                </View>
+              </View>
+
+              {/* 장애 필터 */}
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>♿️ 장애 여부</Text>
+                <View style={styles.disabilityRow}>
+                  <TouchableOpacity
+                    style={[styles.disabilityButton, hasDisability === true && styles.disabilityButtonActive]}
+                    onPress={() => setHasDisability(hasDisability === true ? null : true)}
+                  >
+                    <Text style={[styles.disabilityButtonText, hasDisability === true && styles.disabilityButtonTextActive]}>
+                      장애 있음
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.disabilityButton, hasDisability === false && styles.disabilityButtonActive]}
+                    onPress={() => setHasDisability(hasDisability === false ? null : false)}
+                  >
+                    <Text style={[styles.disabilityButtonText, hasDisability === false && styles.disabilityButtonTextActive]}>
+                      장애 없음
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             </ScrollView>
@@ -437,8 +437,8 @@ const styles = StyleSheet.create({
   // 나이
   ageRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    alignItems: 'flex-end',
+    gap: 12,
   },
   ageInputContainer: {
     flex: 1,
@@ -448,50 +448,43 @@ const styles = StyleSheet.create({
     color: '#666',
     marginBottom: 6,
   },
-  ageButton: {
+  ageInput: {
     backgroundColor: '#F2F2F7',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderRadius: 8,
-    marginBottom: 6,
-  },
-  ageButtonText: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#000',
     textAlign: 'center',
   },
-  ageControls: {
-    flexDirection: 'row',
-    gap: 4,
-  },
-  ageControlButton: {
-    flex: 1,
-    backgroundColor: '#007AFF',
-    paddingVertical: 6,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  ageControlText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  ageResetButton: {
-    flex: 1,
-    backgroundColor: '#FF3B30',
-    paddingVertical: 6,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  ageResetText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
-  },
   ageSeparator: {
-    fontSize: 16,
+    fontSize: 18,
     color: '#8E8E93',
-    marginTop: 20,
+    marginBottom: 12,
+  },
+
+  // 장애
+  disabilityRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  disabilityButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: '#F2F2F7',
+    alignItems: 'center',
+  },
+  disabilityButtonActive: {
+    backgroundColor: '#007AFF',
+  },
+  disabilityButtonText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#000',
+  },
+  disabilityButtonTextActive: {
+    color: '#fff',
   },
 
   // 액션 버튼

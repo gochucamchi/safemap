@@ -28,9 +28,9 @@ const WebMapComponent = ({ html }: { html: string }) => {
   return React.createElement('iframe', {
     srcDoc: html,
     style: {
-      flex: 1,
       width: '100%',
-      height: '100%',
+      height: '100vh',
+      minHeight: '600px',
       border: 'none',
     },
     title: 'Kakao Map',
@@ -108,7 +108,7 @@ const getKakaoMapHTML = (markers: any[], dangerZones: any[]) => {
       margin-right: 6px;
     }
   </style>
-  <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=ab5b40a00e8f67e5d459b80cd7d36466&libraries=clusterer&autoload=false"></script>
+  <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=ab5b40a00e8f67e5d459b80cd7d36466&libraries=clusterer&autoload=false"></script>
 </head>
 <body>
   <div id="map"></div>

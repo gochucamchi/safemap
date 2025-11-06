@@ -28,9 +28,9 @@ const WebMapComponent = ({ html }: { html: string }) => {
   return React.createElement('iframe', {
     srcDoc: html,
     style: {
-      flex: 1,
       width: '100%',
-      height: '100%',
+      height: '100vh',
+      minHeight: '600px',
       border: 'none',
     },
     title: 'Kakao Map',

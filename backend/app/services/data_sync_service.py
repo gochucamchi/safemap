@@ -358,7 +358,8 @@ if __name__ == "__main__":
     load_dotenv()
 
     API_KEY = os.getenv("SAFE_DREAM_API_KEY")
-    KAKAO_API_KEY = os.getenv("KAKAO_JS_API_KEY")
+    # 지오코딩에는 REST API 키 사용 (KAKAO_REST_API_KEY 우선, 없으면 KAKAO_JS_API_KEY)
+    KAKAO_API_KEY = os.getenv("KAKAO_REST_API_KEY") or os.getenv("KAKAO_JS_API_KEY")
     ESNTL_ID = os.getenv("SAFE_DREAM_ESNTL_ID", "10000855")
 
     if not API_KEY:
@@ -366,7 +367,7 @@ if __name__ == "__main__":
         exit(1)
 
     if not KAKAO_API_KEY:
-        print("❌ KAKAO_JS_API_KEY가 설정되지 않았습니다!")
+        print("❌ KAKAO_REST_API_KEY 또는 KAKAO_JS_API_KEY가 설정되지 않았습니다!")
         print("   지오코딩 없이 동기화를 진행하려면 코드를 수정해주세요.")
         exit(1)
 

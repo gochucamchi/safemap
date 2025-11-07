@@ -113,7 +113,8 @@ async def lifespan(app: FastAPI):
     
     # 2. 자동 동기화 시작
     api_key = os.getenv("SAFE_DREAM_API_KEY")
-    kakao_api_key = os.getenv("KAKAO_JS_API_KEY")
+    # 지오코딩에는 REST API 키 사용 (KAKAO_REST_API_KEY 우선, 없으면 KAKAO_JS_API_KEY)
+    kakao_api_key = os.getenv("KAKAO_REST_API_KEY") or os.getenv("KAKAO_JS_API_KEY")
     esntl_id = os.getenv("SAFE_DREAM_ESNTL_ID", "10000855")
 
     if api_key and kakao_api_key:
@@ -126,7 +127,7 @@ async def lifespan(app: FastAPI):
         print("✅ Auto-sync enabled (30-minute interval, auto-geocoding enabled)")
     elif api_key:
         print(f"🔑 API Key found: {api_key[:10]}...")
-        print("⚠️  KAKAO_JS_API_KEY not found - geocoding will be disabled")
+        print("⚠️  KAKAO_REST_API_KEY/KAKAO_JS_API_KEY not found - geocoding will be disabled")
         print("   Set the Kakao API key in .env file to enable auto-geocoding")
     else:
         print("⚠️  SAFE_DREAM_API_KEY not found - auto-sync disabled")

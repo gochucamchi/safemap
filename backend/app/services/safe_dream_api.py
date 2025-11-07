@@ -101,8 +101,11 @@ class SafeDreamAPI:
             # 사진 URLs (여러 필드에서 수집)
             photo_urls = []
 
-            # 다양한 사진 필드 체크
+            # 다양한 사진 필드 체크 (file2가 실종아동사진)
             photo_fields = [
+                "file2",              # 실종아동사진 (메인) ⭐
+                "file1",              # 파일1
+                "file3",              # 파일3
                 "imageURL",           # 기본 이미지
                 "writPhotoUrl",       # 작성 사진
                 "etcPhotoUrl",        # 기타 사진

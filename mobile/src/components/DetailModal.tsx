@@ -8,6 +8,7 @@ import {
   ScrollView,
   Image,
   Dimensions,
+  Platform,
 } from 'react-native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -24,15 +25,27 @@ export default function DetailModal({ visible, onClose, person, isAuthenticated 
 
   if (!person) return null;
 
+  // 디버깅: person 객체 전체 출력
+  console.log('DetailModal - Full person object:', JSON.stringify(person, null, 2));
+
   // 사진 URL 파싱 (JSON 문자열에서 배열로)
   let photos: string[] = [];
   if (person.photo_urls) {
     try {
+      console.log('Raw photo_urls:', person.photo_urls);
+      console.log('Type of photo_urls:', typeof person.photo_urls);
       photos = JSON.parse(person.photo_urls);
-    } catch {
+      console.log('Parsed photos:', photos);
+    } catch (e) {
+      console.error('Failed to parse photo_urls:', e);
       photos = [];
     }
+  } else {
+    console.log('No photo_urls in person data');
   }
+
+  console.log('Final photos array:', photos);
+  console.log('Photos length:', photos.length);
 
   // 현재 나이 계산
   const calculateCurrentAge = () => {
@@ -107,7 +120,7 @@ export default function DetailModal({ visible, onClose, person, isAuthenticated 
 
           <ScrollView style={styles.scrollContent}>
             {/* 사진 슬라이더 */}
-            {photos.length > 0 && (
+            {photos.length > 0 ? (
               <View style={styles.photoSection}>
                 <ScrollView
                   horizontal
@@ -140,6 +153,16 @@ export default function DetailModal({ visible, onClose, person, isAuthenticated 
                     ))}
                   </View>
                 )}
+              </View>
+            ) : (
+              <View style={styles.photoSection}>
+                <View style={styles.noPhotoContainer}>
+                  <Text style={styles.noPhotoIcon}>📷</Text>
+                  <Text style={styles.noPhotoText}>사진 없음</Text>
+                  <Text style={styles.noPhotoDebug}>
+                    디버그: photo_urls = {person.photo_urls ? `"${person.photo_urls}"` : 'null'}
+                  </Text>
+                </View>
               </View>
             )}
 
@@ -372,5 +395,26 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#000',
     marginBottom: 12,
+  },
+  noPhotoContainer: {
+    height: 200,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F2F2F7',
+    borderRadius: 12,
+  },
+  noPhotoIcon: {
+    fontSize: 48,
+    marginBottom: 8,
+  },
+  noPhotoText: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 8,
+  },
+  noPhotoDebug: {
+    fontSize: 12,
+    color: '#999',
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
 });

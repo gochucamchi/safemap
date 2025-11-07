@@ -98,32 +98,22 @@ class SafeDreamAPI:
     def parse_missing_person(self, item: Dict) -> Optional[Dict]:
         """API 응답을 데이터베이스 모델로 변환"""
         try:
-            # 사진 URLs (여러 필드에서 수집)
+            # 사진 URLs (API 엔드포인트 사용)
+            # Safe Dream API는 사진을 별도 API 엔드포인트로 제공
+            # 예: https://www.safe182.go.kr/api/lcm/imgView.do?msspsnIdntfccd={실종자식별코드}
             photo_urls = []
 
-            # 다양한 사진 필드 체크 (file2가 실종아동사진)
-            photo_fields = [
-                "file2",              # 실종아동사진 (메인) ⭐
-                "file1",              # 파일1
-                "file3",              # 파일3
-                "imageURL",           # 기본 이미지
-                "writPhotoUrl",       # 작성 사진
-                "etcPhotoUrl",        # 기타 사진
-                "photoUrl",           # 사진 URL
-                "imageUrl1",          # 이미지 1
-                "imageUrl2",          # 이미지 2
-                "imageUrl3",          # 이미지 3
-            ]
+            # tknphotolength 필드로 사진 존재 여부 확인
+            tknphotolength = item.get("tknphotolength", "0")
+            msspsnIdntfccd = item.get("msspsnIdntfccd")
 
-            for field in photo_fields:
-                url = item.get(field)
-                if url and url not in photo_urls:  # 중복 제거
-                    # URL이 상대 경로인 경우 전체 URL로 변환
-                    if url.startswith('/'):
-                        url = f"https://www.safe182.go.kr{url}"
-                    elif not url.startswith('http'):
-                        url = f"https://www.safe182.go.kr/{url}"
-                    photo_urls.append(url)
+            # 사진이 존재하고 식별코드가 있으면 API URL 생성
+            if tknphotolength != "0" and msspsnIdntfccd:
+                photo_url = f"https://www.safe182.go.kr/api/lcm/imgView.do?msspsnIdntfccd={msspsnIdntfccd}"
+                photo_urls.append(photo_url)
+                print(f"📷 사진 URL 생성: {msspsnIdntfccd} (tknphotolength: {tknphotolength})")
+            else:
+                print(f"📷 사진 없음: {msspsnIdntfccd} (tknphotolength: {tknphotolength})")
 
             return {
                 "external_id": str(item.get("msspsnIdntfccd", "")),

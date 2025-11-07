@@ -382,16 +382,29 @@ export default function MapScreen() {
     if (Platform.OS === 'web') {
       const handleMessage = (event: MessageEvent) => {
         try {
-          const data = JSON.parse(event.data);
+          // event.data가 이미 객체일 수도 있고 문자열일 수도 있음
+          let data = event.data;
+          if (typeof data === 'string') {
+            data = JSON.parse(data);
+          }
+
+          console.log('Received message:', data);
+
           if (data.type === 'showDetail' && data.personId) {
+            console.log('Looking for person with id:', data.personId);
+            console.log('Available persons:', missingPersons.map(p => p.id));
+
             const person = missingPersons.find((p) => p.id === data.personId);
             if (person) {
+              console.log('Found person:', person);
               setSelectedPerson(person);
               setShowDetailModal(true);
+            } else {
+              console.log('Person not found');
             }
           }
         } catch (e) {
-          // Ignore invalid messages
+          console.error('Error handling message:', e);
         }
       };
       window.addEventListener('message', handleMessage);

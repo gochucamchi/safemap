@@ -98,10 +98,29 @@ class SafeDreamAPI:
     def parse_missing_person(self, item: Dict) -> Optional[Dict]:
         """API 응답을 데이터베이스 모델로 변환"""
         try:
-            # 사진 URLs (imageURL이 있으면 리스트로 변환)
+            # 사진 URLs (여러 필드에서 수집)
             photo_urls = []
-            if item.get("imageURL"):
-                photo_urls.append(item.get("imageURL"))
+
+            # 다양한 사진 필드 체크
+            photo_fields = [
+                "imageURL",           # 기본 이미지
+                "writPhotoUrl",       # 작성 사진
+                "etcPhotoUrl",        # 기타 사진
+                "photoUrl",           # 사진 URL
+                "imageUrl1",          # 이미지 1
+                "imageUrl2",          # 이미지 2
+                "imageUrl3",          # 이미지 3
+            ]
+
+            for field in photo_fields:
+                url = item.get(field)
+                if url and url not in photo_urls:  # 중복 제거
+                    # URL이 상대 경로인 경우 전체 URL로 변환
+                    if url.startswith('/'):
+                        url = f"https://www.safe182.go.kr{url}"
+                    elif not url.startswith('http'):
+                        url = f"https://www.safe182.go.kr/{url}"
+                    photo_urls.append(url)
 
             return {
                 "external_id": str(item.get("msspsnIdntfccd", "")),
@@ -129,8 +148,8 @@ class SafeDreamAPI:
                 # 착의사항
                 "clothing_description": item.get("alldressingDscd", ""),  # 착의의상
 
-                # 사진
-                "photo_urls": json.dumps(photo_urls) if photo_urls else None,
+                # 사진 (JSON 배열로 저장)
+                "photo_urls": json.dumps(photo_urls, ensure_ascii=False) if photo_urls else None,
 
                 # 기타 특징
                 "special_features": item.get("etcSpfeatr", ""),  # 기타 특이사항

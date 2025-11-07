@@ -132,12 +132,13 @@ export default function DetailModal({ visible, onClose, person, isAuthenticated 
                   }}
                 >
                   {photos.map((photo, index) => (
-                    <Image
-                      key={index}
-                      source={{ uri: photo }}
-                      style={styles.photo}
-                      resizeMode="cover"
-                    />
+                    <View key={index} style={styles.photoContainer}>
+                      <Image
+                        source={{ uri: photo }}
+                        style={styles.photo}
+                        resizeMode="contain"
+                      />
+                    </View>
                   ))}
                 </ScrollView>
                 {photos.length > 1 && (
@@ -291,11 +292,19 @@ const styles = StyleSheet.create({
   photoSection: {
     marginBottom: 20,
   },
-  photo: {
+  photoContainer: {
     width: SCREEN_WIDTH - 80,
     height: 300,
+    backgroundColor: '#F2F2F7',
     borderRadius: 12,
     marginRight: 10,
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  photo: {
+    width: '100%',
+    height: '100%',
   },
   photoIndicator: {
     flexDirection: 'row',

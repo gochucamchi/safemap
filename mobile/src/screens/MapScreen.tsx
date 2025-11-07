@@ -10,6 +10,7 @@ import {
 import { api } from '../services/api';
 import AdvancedFilterModal from '../components/AdvancedFilterModal';
 import DetailModal from '../components/DetailModal';
+import { useAuth } from '../contexts/AuthContext';
 
 // Platform별 WebView import
 let WebView: any = null;
@@ -264,6 +265,7 @@ const getKakaoMapHTML = (markers: any[], dangerZones: any[]) => {
 };
 
 export default function MapScreen() {
+  const { isAuthenticated } = useAuth();
   const [missingPersons, setMissingPersons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState(null);
@@ -566,7 +568,7 @@ export default function MapScreen() {
           setSelectedPerson(null);
         }}
         person={selectedPerson}
-        isAuthenticated={false}
+        isAuthenticated={isAuthenticated}
       />
     </View>
   );

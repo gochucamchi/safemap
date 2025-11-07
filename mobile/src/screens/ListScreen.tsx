@@ -12,8 +12,10 @@ import { api } from '../services/api';
 import DateFilter from '../components/DateFilter';
 import AdvancedFilterModal from '../components/AdvancedFilterModal';
 import DetailModal from '../components/DetailModal';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function ListScreen() {
+  const { isAuthenticated } = useAuth();
   const [missingPersons, setMissingPersons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -281,7 +283,7 @@ export default function ListScreen() {
           setSelectedPerson(null);
         }}
         person={selectedPerson}
-        isAuthenticated={false}
+        isAuthenticated={isAuthenticated}
       />
     </View>
   );

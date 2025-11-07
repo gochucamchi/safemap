@@ -17,17 +17,28 @@ export default function ListScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedDays, setSelectedDays] = useState(30);
-  const [activeTab, setActiveTab] = useState<'missing' | 'resolved'>('missing');
+  const [activeTab, setActiveTab] = useState<'all' | 'missing' | 'resolved' | 'location_unknown'>('all');
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState<any>({});
 
   // 데이터 로드 (모든 필터 적용)
-  const loadData = async (days = 30, status = 'missing', filters = {}) => {
+  const loadData = async (days = 30, status = 'all', filters = {}) => {
     try {
       const params: any = {
         limit: 100,
-        status: status,
       };
+
+      // 탭별 필터 적용
+      if (status === 'all') {
+        // 전체: status 필터 없음
+        params.status = 'all';
+      } else if (status === 'location_unknown') {
+        // 위치 불명: geocoding_status가 failed인 것만
+        params.geocoding_status = 'failed';
+      } else {
+        // missing 또는 resolved
+        params.status = status;
+      }
 
       // 날짜 필터: 고급 필터에서 직접 입력한 날짜가 있으면 우선 사용
       if (filters.startDate && filters.endDate) {
@@ -84,7 +95,7 @@ export default function ListScreen() {
   };
 
   // 탭 변경 핸들러
-  const handleTabChange = (tab: 'missing' | 'resolved') => {
+  const handleTabChange = (tab: 'all' | 'missing' | 'resolved' | 'location_unknown') => {
     setActiveTab(tab);
   };
 
@@ -165,6 +176,14 @@ export default function ListScreen() {
       {/* 탭 메뉴 */}
       <View style={styles.tabContainer}>
         <TouchableOpacity
+          style={[styles.tab, activeTab === 'all' && styles.tabActive]}
+          onPress={() => handleTabChange('all')}
+        >
+          <Text style={[styles.tabText, activeTab === 'all' && styles.tabTextActive]}>
+            전체
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
           style={[styles.tab, activeTab === 'missing' && styles.tabActive]}
           onPress={() => handleTabChange('missing')}
         >
@@ -178,6 +197,14 @@ export default function ListScreen() {
         >
           <Text style={[styles.tabText, activeTab === 'resolved' && styles.tabTextActive]}>
             실종 해제
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'location_unknown' && styles.tabActive]}
+          onPress={() => handleTabChange('location_unknown')}
+        >
+          <Text style={[styles.tabText, activeTab === 'location_unknown' && styles.tabTextActive]}>
+            위치 불명
           </Text>
         </TouchableOpacity>
       </View>
@@ -283,7 +310,8 @@ const styles = StyleSheet.create({
   },
   tab: {
     flex: 1,
-    paddingVertical: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 4,
     alignItems: 'center',
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
@@ -292,7 +320,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#007AFF',
   },
   tabText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '500',
     color: '#8E8E93',
   },

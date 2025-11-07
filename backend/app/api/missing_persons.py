@@ -142,15 +142,27 @@ async def get_missing_persons(
             {
                 "id": p.id,
                 "external_id": p.external_id,
+                "name": p.name,
                 "missing_date": p.missing_date.isoformat() if p.missing_date else None,
+                "age_at_disappearance": p.age_at_disappearance,
+                "gender": p.gender,
+                "nationality": p.nationality,
                 "location_address": p.location_address,
                 "location_detail": p.location_detail,
-                "age": p.age,
-                "gender": p.gender,
                 "latitude": p.latitude,
                 "longitude": p.longitude,
-                "status": p.status,  # ✅ 추가
-                "resolved_at": p.resolved_at.isoformat() if p.resolved_at else None,  # ✅ 추가
+                "geocoding_status": p.geocoding_status,
+                "height": p.height,
+                "weight": p.weight,
+                "body_type": p.body_type,
+                "face_shape": p.face_shape,
+                "hair_color": p.hair_color,
+                "hair_style": p.hair_style,
+                "clothing_description": p.clothing_description,
+                "photo_urls": p.photo_urls,
+                "special_features": p.special_features,
+                "status": p.status,
+                "resolved_at": p.resolved_at.isoformat() if p.resolved_at else None,
             }
             for p in persons
         ]

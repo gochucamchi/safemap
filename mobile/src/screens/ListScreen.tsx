@@ -11,6 +11,7 @@ import {
 import { api } from '../services/api';
 import DateFilter from '../components/DateFilter';
 import AdvancedFilterModal from '../components/AdvancedFilterModal';
+import DetailModal from '../components/DetailModal';
 
 export default function ListScreen() {
   const [missingPersons, setMissingPersons] = useState([]);
@@ -20,6 +21,8 @@ export default function ListScreen() {
   const [activeTab, setActiveTab] = useState<'all' | 'missing' | 'resolved' | 'location_unknown'>('all');
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState<any>({});
+  const [selectedPerson, setSelectedPerson] = useState<any>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
 
   // 데이터 로드 (모든 필터 적용)
   const loadData = async (days = 30, status = 'all', filters = {}) => {
@@ -115,7 +118,13 @@ export default function ListScreen() {
     const isMissing = item.status === 'missing';
 
     return (
-      <TouchableOpacity style={styles.card}>
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => {
+          setSelectedPerson(item);
+          setShowDetailModal(true);
+        }}
+      >
         <View style={styles.cardHeader}>
           <Text style={styles.date}>
             {new Date(item.missing_date).toLocaleDateString('ko-KR', {
@@ -136,9 +145,9 @@ export default function ListScreen() {
             📍 {item.location_address}
           </Text>
 
-          {item.age && item.gender && (
+          {item.age_at_disappearance && item.gender && (
             <Text style={styles.info}>
-              {item.gender === 'M' ? '남성' : '여성'} · {item.age}세
+              {item.gender === 'M' ? '남성' : '여성'} · {item.age_at_disappearance}세
             </Text>
           )}
 
@@ -262,6 +271,17 @@ export default function ListScreen() {
         onClose={() => setShowAdvancedFilter(false)}
         onApply={handleAdvancedFilterApply}
         initialFilters={advancedFilters}
+      />
+
+      {/* 상세 정보 모달 */}
+      <DetailModal
+        visible={showDetailModal}
+        onClose={() => {
+          setShowDetailModal(false);
+          setSelectedPerson(null);
+        }}
+        person={selectedPerson}
+        isAuthenticated={false}
       />
     </View>
   );

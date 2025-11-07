@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { api } from '../services/api';
 import AdvancedFilterModal from '../components/AdvancedFilterModal';
+import DetailModal from '../components/DetailModal';
 
 // Platform별 WebView import
 let WebView: any = null;
@@ -81,6 +82,21 @@ const getKakaoMapHTML = (markers: any[], dangerZones: any[]) => {
       border-bottom: 0;
       margin-left: -6px;
     }
+    .detail-button {
+      margin-top: 8px;
+      padding: 6px 12px;
+      background: #007AFF;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+    }
+    .detail-button:active {
+      background: #0051D5;
+    }
     .legend {
       position: absolute;
       top: 10px;
@@ -138,6 +154,15 @@ const getKakaoMapHTML = (markers: any[], dangerZones: any[]) => {
     </div>
   </div>
   <script>
+    // React Native로 메시지 전송 함수
+    function showDetail(personId) {
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'showDetail', personId: personId }));
+      } else if (window.parent) {
+        window.parent.postMessage(JSON.stringify({ type: 'showDetail', personId: personId }), '*');
+      }
+    }
+
     // 데이터 준비
     var markers = ${JSON.stringify(markers)};
     var dangerZones = ${JSON.stringify(dangerZones)};
@@ -208,6 +233,7 @@ const getKakaoMapHTML = (markers: any[], dangerZones: any[]) => {
           '<div class="info">' + markerData.address + '</div>' +
           '<div class="info">' + markerData.date + '</div>' +
           (markerData.personInfo ? '<div class="info">' + markerData.personInfo + '</div>' : '') +
+          '<button class="detail-button" onclick="showDetail(' + markerData.id + ')">자세히보기</button>' +
           '</div>';
 
         var customOverlay = new kakao.maps.CustomOverlay({
@@ -244,6 +270,8 @@ export default function MapScreen() {
   const [activeTab, setActiveTab] = useState<'all' | 'missing' | 'resolved'>('all');
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState<any>({});
+  const [selectedPerson, setSelectedPerson] = useState<any>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const webViewRef = useRef(null);
 
   // 위험도 계산 함수
@@ -347,6 +375,28 @@ export default function MapScreen() {
     loadData(activeTab, advancedFilters);
   }, [activeTab, advancedFilters]);
 
+  // 웹에서 postMessage 이벤트 리스너
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      const handleMessage = (event: MessageEvent) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'showDetail' && data.personId) {
+            const person = missingPersons.find((p) => p.id === data.personId);
+            if (person) {
+              setSelectedPerson(person);
+              setShowDetailModal(true);
+            }
+          }
+        } catch (e) {
+          // Ignore invalid messages
+        }
+      };
+      window.addEventListener('message', handleMessage);
+      return () => window.removeEventListener('message', handleMessage);
+    }
+  }, [missingPersons]);
+
   const handleAdvancedFilterApply = (filters) => {
     setAdvancedFilters(filters);
   };
@@ -359,12 +409,14 @@ export default function MapScreen() {
   const markers = missingPersons
     .filter((p) => p.latitude && p.longitude)
     .map((p) => ({
+      id: p.id,
+      external_id: p.external_id,
       lat: p.latitude,
       lng: p.longitude,
       status: p.status,
       address: p.location_address,
       date: new Date(p.missing_date).toLocaleDateString('ko-KR'),
-      personInfo: p.age && p.gender ? `${p.gender === 'M' ? '남성' : '여성'} · ${p.age}세` : null,
+      personInfo: p.age_at_disappearance && p.gender ? `${p.gender === 'M' ? '남성' : '여성'} · ${p.age_at_disappearance}세` : null,
     }));
 
   // 위험 지역 계산
@@ -460,6 +512,20 @@ export default function MapScreen() {
             javaScriptEnabled={true}
             domStorageEnabled={true}
             startInLoadingState={true}
+            onMessage={(event) => {
+              try {
+                const data = JSON.parse(event.nativeEvent.data);
+                if (data.type === 'showDetail' && data.personId) {
+                  const person = missingPersons.find((p) => p.id === data.personId);
+                  if (person) {
+                    setSelectedPerson(person);
+                    setShowDetailModal(true);
+                  }
+                }
+              } catch (e) {
+                console.log('Invalid message from WebView');
+              }
+            }}
             renderLoading={() => (
               <View style={styles.centered}>
                 <ActivityIndicator size="large" color="#007AFF" />
@@ -490,6 +556,17 @@ export default function MapScreen() {
         onClose={() => setShowAdvancedFilter(false)}
         onApply={handleAdvancedFilterApply}
         initialFilters={advancedFilters}
+      />
+
+      {/* 상세 정보 모달 */}
+      <DetailModal
+        visible={showDetailModal}
+        onClose={() => {
+          setShowDetailModal(false);
+          setSelectedPerson(null);
+        }}
+        person={selectedPerson}
+        isAuthenticated={false}
       />
     </View>
   );

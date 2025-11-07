@@ -22,9 +22,10 @@ from app.api import missing_persons
 # 자동 동기화 매니저
 class AutoSyncManager:
     """자동 동기화 매니저 (30분마다)"""
-    
-    def __init__(self, api_key: str, esntl_id: str = "10000855"):
+
+    def __init__(self, api_key: str, kakao_api_key: str, esntl_id: str = "10000855"):
         self.api_key = api_key
+        self.kakao_api_key = kakao_api_key
         self.esntl_id = esntl_id
         self.task = None
         self.is_running = False
@@ -70,18 +71,20 @@ class AutoSyncManager:
         """동기화 실행"""
         try:
             from app.services.data_sync_service import DataSyncService
-            
+
             service = DataSyncService(
                 api_key=self.api_key,
+                kakao_api_key=self.kakao_api_key,
                 esntl_id=self.esntl_id
             )
-            
+
             result = await service.sync_all_data(max_pages=50)
-            
+
             if result["success"]:
                 stats = service.get_statistics()
                 print(f"\n📊 현재 DB: {stats['total_count']}건")
-            
+                print(f"   지오코딩: 성공 {stats['geocoding_success']}건 / 실패 {stats['geocoding_failed']}건")
+
         except Exception as e:
             print(f"❌ 동기화 실패: {e}")
             import traceback
@@ -110,15 +113,21 @@ async def lifespan(app: FastAPI):
     
     # 2. 자동 동기화 시작
     api_key = os.getenv("SAFE_DREAM_API_KEY")
+    kakao_api_key = os.getenv("KAKAO_JS_API_KEY")
     esntl_id = os.getenv("SAFE_DREAM_ESNTL_ID", "10000855")
-    
-    if api_key:
+
+    if api_key and kakao_api_key:
         print(f"🔑 API Key found: {api_key[:10]}...")
+        print(f"🗺️  Kakao API Key found: {kakao_api_key[:10]}...")
         print(f"👤 Esntl ID: {esntl_id}")
-        print("🔄 Initializing auto-sync service...")
-        sync_manager = AutoSyncManager(api_key, esntl_id)
+        print("🔄 Initializing auto-sync service with auto-geocoding...")
+        sync_manager = AutoSyncManager(api_key, kakao_api_key, esntl_id)
         await sync_manager.start()
-        print("✅ Auto-sync enabled (30-minute interval)")
+        print("✅ Auto-sync enabled (30-minute interval, auto-geocoding enabled)")
+    elif api_key:
+        print(f"🔑 API Key found: {api_key[:10]}...")
+        print("⚠️  KAKAO_JS_API_KEY not found - geocoding will be disabled")
+        print("   Set the Kakao API key in .env file to enable auto-geocoding")
     else:
         print("⚠️  SAFE_DREAM_API_KEY not found - auto-sync disabled")
         print("   Set the API key in .env file to enable auto-sync")
@@ -211,20 +220,21 @@ async def trigger_sync():
             "success": False,
             "message": "Auto-sync is not configured"
         }
-    
+
     print("\n🔄 수동 동기화 요청")
-    
+
     try:
         from app.services.data_sync_service import DataSyncService
-        
+
         service = DataSyncService(
             api_key=sync_manager.api_key,
+            kakao_api_key=sync_manager.kakao_api_key,
             esntl_id=sync_manager.esntl_id
         )
-        
+
         result = await service.sync_all_data(max_pages=50)
         return result
-    
+
     except Exception as e:
         return {
             "success": False,

@@ -13,6 +13,7 @@ from typing import Dict, List
 try:
     from sqlalchemy.orm import Session
     from app.services.safe_dream_api import SafeDreamAPI
+    from app.services.geocoding_service import KakaoGeocodingService
     from app.models.missing_person import MissingPerson
     from app.database.db import SessionLocal
     SQLALCHEMY_AVAILABLE = True
@@ -23,12 +24,13 @@ except ImportError:
 
 class DataSyncService:
     """데이터 동기화 서비스"""
-    
-    def __init__(self, api_key: str, esntl_id: str = "10000855"):
+
+    def __init__(self, api_key: str, kakao_api_key: str, esntl_id: str = "10000855"):
         if not SQLALCHEMY_AVAILABLE:
             raise ImportError("SQLAlchemy가 설치되지 않았습니다")
-        
+
         self.api_client = SafeDreamAPI(api_key=api_key, esntl_id=esntl_id)
+        self.geocoding_service = KakaoGeocodingService(api_key=kakao_api_key)
     
     async def sync_all_data(self, max_pages: int = 50) -> Dict:
         """모든 데이터 동기화 (최적화)"""
@@ -172,8 +174,8 @@ class DataSyncService:
 
             for idx, item in enumerate(all_persons, 1):
                 try:
-                    sync_result = self._sync_person(item, db)
-                    
+                    sync_result = await self._sync_person(item, db)
+
                     if sync_result == "added":
                         result["new_added"] += 1
                         if result["new_added"] <= 10:  # 처음 10개만 출력
@@ -184,12 +186,12 @@ class DataSyncService:
                             print(f"🔄 [{idx}/{len(all_persons)}] 데이터 업데이트: {item.get('occrAdres', 'N/A')[:40]}")
                     elif sync_result == "skipped":
                         result["skipped"] += 1
-                    
+
                     # 주기적으로 커밋
                     if idx % 50 == 0:
                         db.commit()
                         print(f"   💾 {idx}건 저장 완료")
-                
+
                 except Exception as e:
                     error_msg = f"데이터 저장 실패 (항목 {idx}): {str(e)}"
                     result["errors"].append(error_msg)
@@ -238,12 +240,25 @@ class DataSyncService:
         
         return result
     
-    def _sync_person(self, item: Dict, db: Session) -> str:
-        """개별 실종자 데이터 동기화"""
+    async def _sync_person(self, item: Dict, db: Session) -> str:
+        """개별 실종자 데이터 동기화 (자동 지오코딩 포함)"""
         parsed = self.api_client.parse_missing_person(item)
 
         if not parsed or not parsed.get("external_id"):
             return "skipped"
+
+        # 🗺️ 자동 지오코딩: 주소가 있고 좌표가 없으면 변환 시도
+        if parsed.get("location_address") and not parsed.get("latitude"):
+            try:
+                coords = await self.geocoding_service.geocode_address(parsed["location_address"])
+                if coords:
+                    parsed["latitude"], parsed["longitude"] = coords
+                    parsed["geocoding_status"] = "success"
+                else:
+                    parsed["geocoding_status"] = "failed"
+            except Exception as e:
+                print(f"⚠️ 지오코딩 실패: {parsed['location_address'][:30]} - {str(e)}")
+                parsed["geocoding_status"] = "failed"
 
         existing = db.query(MissingPerson).filter(
             MissingPerson.external_id == parsed["external_id"]
@@ -275,31 +290,46 @@ class DataSyncService:
         db = SessionLocal()
         try:
             total_count = db.query(MissingPerson).count()
-            
+
             from datetime import timedelta
             recent_date = datetime.now() - timedelta(days=7)
             recent_count = db.query(MissingPerson).filter(
                 MissingPerson.created_at >= recent_date
             ).count()
-            
+
             geocoded_count = db.query(MissingPerson).filter(
                 MissingPerson.latitude.isnot(None),
                 MissingPerson.longitude.isnot(None)
             ).count()
-            
+
+            geocoding_success = db.query(MissingPerson).filter(
+                MissingPerson.geocoding_status == "success"
+            ).count()
+
+            geocoding_failed = db.query(MissingPerson).filter(
+                MissingPerson.geocoding_status == "failed"
+            ).count()
+
+            geocoding_pending = db.query(MissingPerson).filter(
+                MissingPerson.geocoding_status == "pending"
+            ).count()
+
             return {
                 "total_count": total_count,
                 "recent_count": recent_count,
                 "geocoded_count": geocoded_count,
-                "geocoded_percentage": round(geocoded_count / total_count * 100, 1) if total_count > 0 else 0
+                "geocoded_percentage": round(geocoded_count / total_count * 100, 1) if total_count > 0 else 0,
+                "geocoding_success": geocoding_success,
+                "geocoding_failed": geocoding_failed,
+                "geocoding_pending": geocoding_pending
             }
         finally:
             db.close()
 
 
-async def run_sync(api_key: str, esntl_id: str = "10000855", max_pages: int = 50):
+async def run_sync(api_key: str, kakao_api_key: str, esntl_id: str = "10000855", max_pages: int = 50):
     """동기화 실행 함수"""
-    service = DataSyncService(api_key=api_key, esntl_id=esntl_id)
+    service = DataSyncService(api_key=api_key, kakao_api_key=kakao_api_key, esntl_id=esntl_id)
     result = await service.sync_all_data(max_pages=max_pages)
     
     stats = service.get_statistics()
@@ -310,6 +340,11 @@ async def run_sync(api_key: str, esntl_id: str = "10000855", max_pages: int = 50
    • 전체 실종자: {stats['total_count']}명
    • 최근 7일 추가: {stats['recent_count']}명
    • 위경도 변환 완료: {stats['geocoded_count']}명 ({stats['geocoded_percentage']}%)
+
+   📍 지오코딩 상태:
+   • 성공: {stats['geocoding_success']}명
+   • 실패 (위치 불명): {stats['geocoding_failed']}명
+   • 대기 중: {stats['geocoding_pending']}명
     """)
     print("="*60 + "\n")
     
@@ -319,19 +354,25 @@ async def run_sync(api_key: str, esntl_id: str = "10000855", max_pages: int = 50
 if __name__ == "__main__":
     import os
     from dotenv import load_dotenv
-    
+
     load_dotenv()
-    
+
     API_KEY = os.getenv("SAFE_DREAM_API_KEY")
+    KAKAO_API_KEY = os.getenv("KAKAO_JS_API_KEY")
     ESNTL_ID = os.getenv("SAFE_DREAM_ESNTL_ID", "10000855")
-    
+
     if not API_KEY:
         print("❌ SAFE_DREAM_API_KEY가 설정되지 않았습니다!")
         exit(1)
-    
-    print("🚀 SafeMap 데이터 동기화 시작...\n")
-    result = asyncio.run(run_sync(api_key=API_KEY, esntl_id=ESNTL_ID, max_pages=50))
-    
+
+    if not KAKAO_API_KEY:
+        print("❌ KAKAO_JS_API_KEY가 설정되지 않았습니다!")
+        print("   지오코딩 없이 동기화를 진행하려면 코드를 수정해주세요.")
+        exit(1)
+
+    print("🚀 SafeMap 데이터 동기화 시작 (자동 지오코딩 포함)...\n")
+    result = asyncio.run(run_sync(api_key=API_KEY, kakao_api_key=KAKAO_API_KEY, esntl_id=ESNTL_ID, max_pages=50))
+
     if result["success"]:
         print("✅ 동기화 성공!")
     else:

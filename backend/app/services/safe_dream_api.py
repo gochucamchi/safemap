@@ -5,6 +5,7 @@
 """
 
 import httpx
+import json
 from typing import List, Dict, Optional
 from datetime import datetime
 from urllib.parse import urlencode
@@ -97,15 +98,42 @@ class SafeDreamAPI:
     def parse_missing_person(self, item: Dict) -> Optional[Dict]:
         """API 응답을 데이터베이스 모델로 변환"""
         try:
+            # 사진 URLs (imageURL이 있으면 리스트로 변환)
+            photo_urls = []
+            if item.get("imageURL"):
+                photo_urls.append(item.get("imageURL"))
+
             return {
                 "external_id": str(item.get("msspsnIdntfccd", "")),
-                "missing_date": self._parse_date(item.get("occrde")),
-                "location_address": item.get("occrAdres", ""),
-                "location_detail": item.get("alldressingDscd", ""),
-                "age": self._parse_age(item.get("age")),
-                "gender": self._parse_gender(item.get("sexdstnDscd")),
-                "latitude": None,
-                "longitude": None,
+                "name": item.get("nm", ""),  # 이름
+                "missing_date": self._parse_date(item.get("occrde")),  # 발생일시
+                "age_at_disappearance": self._parse_age(item.get("age")),  # 실종 당시 나이
+                "gender": self._parse_gender(item.get("sexdstnDscd")),  # 성별
+                "nationality": item.get("ntltyDscd", "대한민국"),  # 국적
+
+                # 위치 정보
+                "location_address": item.get("occrAdres", ""),  # 발생장소
+                "location_detail": item.get("occrDetailadres", ""),  # 발생장소 상세
+                "latitude": None,  # 지오코딩으로 채워짐
+                "longitude": None,  # 지오코딩으로 채워짐
+                "geocoding_status": "pending",  # 초기 상태
+
+                # 신체 특징
+                "height": self._parse_number(item.get("tllCm")),  # 키
+                "weight": self._parse_number(item.get("wghtKg")),  # 몸무게
+                "body_type": item.get("bdTypeDscd", ""),  # 체격
+                "face_shape": item.get("faceShpDscd", ""),  # 얼굴형
+                "hair_color": item.get("hfclrDscd", ""),  # 두발색상
+                "hair_style": item.get("hfstlDscd", ""),  # 두발형태
+
+                # 착의사항
+                "clothing_description": item.get("alldressingDscd", ""),  # 착의의상
+
+                # 사진
+                "photo_urls": json.dumps(photo_urls) if photo_urls else None,
+
+                # 기타 특징
+                "special_features": item.get("etcSpfeatr", ""),  # 기타 특이사항
             }
         except Exception as e:
             print(f"⚠️ 데이터 파싱 실패: {e}")
@@ -139,6 +167,13 @@ class SafeDreamAPI:
         elif "여" in str(gender_str):
             return "F"
         return None
+
+    def _parse_number(self, number_str) -> Optional[int]:
+        """숫자 파싱 (키, 몸무게 등)"""
+        try:
+            return int(number_str) if number_str else None
+        except:
+            return None
 
 
 # 싱글톤 인스턴스

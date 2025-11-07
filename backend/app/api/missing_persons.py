@@ -32,6 +32,7 @@ async def get_missing_persons(
     limit: int = Query(100, ge=1, le=1000),
     skip: int = Query(0, ge=0),
     status: Optional[str] = Query(None, description="상태 필터 (missing/resolved/all)", regex="^(missing|resolved|all)$"),
+    geocoding_status: Optional[str] = Query(None, description="지오코딩 상태 필터 (pending/success/failed)", regex="^(pending|success|failed)$"),
     days: Optional[int] = Query(None, ge=1, le=3650, description="최근 N일 데이터"),
     start_date: Optional[str] = Query(None, description="시작일 (YYYY-MM-DD)"),
     end_date: Optional[str] = Query(None, description="종료일 (YYYY-MM-DD)"),
@@ -49,6 +50,11 @@ async def get_missing_persons(
     - status=resolved → 실종 해제된 사람만
     - status=all 또는 생략 → 전체
 
+    지오코딩 상태 필터:
+    - geocoding_status=success → 좌표 변환 성공
+    - geocoding_status=failed → 좌표 변환 실패 (위치 불명)
+    - geocoding_status=pending → 좌표 변환 대기 중
+
     날짜 필터 옵션:
     1. days=30 → 최근 30일
     2. start_date=2024-01-01&end_date=2024-12-31 → 특정 기간
@@ -64,6 +70,10 @@ async def get_missing_persons(
     # ✅ 상태 필터 적용
     if status and status != "all":
         query = query.filter(MissingPerson.status == status)
+
+    # ✅ 지오코딩 상태 필터 적용
+    if geocoding_status:
+        query = query.filter(MissingPerson.geocoding_status == geocoding_status)
 
     # 날짜 필터 적용
     if days:

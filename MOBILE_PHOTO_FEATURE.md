@@ -55,7 +55,8 @@ cd backend
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 # 데이터 동기화 (사진 포함)
-curl -X POST "http://localhost:8000/api/v1/sync/missing-persons?scrape_photos=true&max_photo_persons=10"
+# max_photo_persons: 최대 200명까지 가능 (기본값: 50)
+curl -X POST "http://localhost:8000/api/v1/sync/missing-persons?scrape_photos=true&max_photo_persons=100"
 ```
 
 #### 2. 모바일 앱 실행
@@ -173,8 +174,8 @@ backend/
 # 1. 백엔드 상태 확인
 curl http://localhost:8000/api/v1/health
 
-# 2. 사진 스크랩 실행
-curl -X POST "http://localhost:8000/api/v1/sync/missing-persons?scrape_photos=true&max_photo_persons=5"
+# 2. 사진 스크랩 실행 (최대 200명까지 가능)
+curl -X POST "http://localhost:8000/api/v1/sync/missing-persons?scrape_photos=true&max_photo_persons=100"
 
 # 3. API_BASE_URL 확인 (mobile/src/services/api.js)
 export const API_BASE_URL = 'https://nightmarish-vampire-pqxqw7v7hrq7p-8000.app.github.dev';

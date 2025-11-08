@@ -7,7 +7,10 @@ SafeMap API Server
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
+from pathlib import Path
 import os
 import asyncio
 
@@ -167,6 +170,13 @@ app.include_router(
     prefix="/api/v1",
     tags=["missing-persons"]
 )
+
+# 사진 디렉토리 정적 파일 서빙
+PHOTOS_DIR = Path("downloaded_photos")
+PHOTOS_DIR.mkdir(exist_ok=True)
+
+# Static files 마운트 (사진 서빙용)
+app.mount("/photos", StaticFiles(directory=str(PHOTOS_DIR)), name="photos")
 
 
 # 루트 엔드포인트

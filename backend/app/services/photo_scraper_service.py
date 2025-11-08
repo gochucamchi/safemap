@@ -2,7 +2,7 @@
 """
 실종자 사진 스크랩 서비스
 - Rate limiting 방지를 위한 딜레이 및 재시도 로직
-- 진행 상황 저장 및 재개
+- 사진을 실제로 다운로드해서 파일로 저장
 - MD5 해시를 통한 중복 사진 필터링
 """
 
@@ -10,6 +10,7 @@ import asyncio
 import hashlib
 from datetime import datetime
 from typing import List, Dict, Optional
+from pathlib import Path
 import httpx
 
 
@@ -19,14 +20,17 @@ class PhotoScraperService:
     # 플레이스홀더 이미지 크기 (건너뛰기)
     PLACEHOLDER_SIZE = 2860
 
-    def __init__(self, delay: float = 3.0, max_retries: int = 3):
+    def __init__(self, delay: float = 3.0, max_retries: int = 3, photos_dir: str = "downloaded_photos"):
         """
         Args:
             delay: 요청 간 기본 딜레이 (초)
             max_retries: 최대 재시도 횟수
+            photos_dir: 사진 저장 디렉토리
         """
         self.delay = delay
         self.max_retries = max_retries
+        self.photos_dir = Path(photos_dir)
+        self.photos_dir.mkdir(exist_ok=True)
         self.session: Optional[httpx.AsyncClient] = None
 
     async def __aenter__(self):
@@ -81,20 +85,24 @@ class PhotoScraperService:
 
     async def scrape_person_photos(self, external_id: str, name: str = "") -> List[str]:
         """
-        특정 실종자의 사진 URL 스크랩
+        특정 실종자의 사진을 다운로드하고 파일로 저장
 
         Args:
             external_id: 실종자 ID (msspsnIdntfccd)
             name: 실종자 이름 (로깅용)
 
         Returns:
-            사진 URL 리스트
+            저장된 사진 파일 경로 리스트 (예: ["downloaded_photos/6048080/photo_0.jpg", ...])
         """
+        # 개인별 폴더 생성
+        person_dir = self.photos_dir / str(external_id)
+        person_dir.mkdir(exist_ok=True)
+
         # 1. 상세 페이지 먼저 방문 (세션 생성)
         detail_url = f"https://www.safe182.go.kr/home/lcm/lcmMssGet.do?msspsnIdntfccd={external_id}&rptDscd=2"
 
         print(f"\n{'='*80}")
-        print(f"📸 사진 스크랩: {name} (ID: {external_id})")
+        print(f"📸 사진 다운로드: {name} (ID: {external_id})")
         print(f"{'='*80}")
 
         # 상세 페이지 접속
@@ -105,9 +113,10 @@ class PhotoScraperService:
 
         print("  ✅ 상세 페이지 접속 성공")
 
-        # 2. 세션 유지하면서 사진 다운로드
-        photo_urls = []
+        # 2. 세션 유지하면서 사진 다운로드 및 저장
+        saved_photos = []
         seen_hashes = set()
+        unique_photos = []  # (hash, data) 튜플 저장
 
         # 최대 10개까지 시도 (인덱스 기반)
         for idx in range(10):
@@ -142,19 +151,29 @@ class PhotoScraperService:
 
             # 고유한 사진
             seen_hashes.add(img_hash)
-            photo_urls.append(photo_url)
+            unique_photos.append((img_hash, img_data))
             print(f"  [{idx}] ✅ 고유한 사진! ({img_size} bytes, MD5: {img_hash[:8]}...)")
 
             # Rate limiting 방지
             await asyncio.sleep(0.5)
 
-        print(f"  📊 총 {len(photo_urls)}개 사진 URL 수집 완료\n")
+        # 3. 파일로 저장
+        for save_idx, (img_hash, img_data) in enumerate(unique_photos):
+            photo_path = person_dir / f"photo_{save_idx}.jpg"
+            photo_path.write_bytes(img_data)
+
+            # 상대 경로로 저장 (API에서 사용할 경로)
+            relative_path = f"{self.photos_dir.name}/{external_id}/photo_{save_idx}.jpg"
+            saved_photos.append(relative_path)
+            print(f"  💾 저장: {photo_path.name} ({len(img_data)} bytes)")
+
+        print(f"  📊 총 {len(saved_photos)}개 사진 파일 저장 완료\n")
 
         # 다음 사람으로 넘어가기 전 딜레이
-        if photo_urls:
+        if saved_photos:
             await asyncio.sleep(self.delay)
 
-        return photo_urls
+        return saved_photos
 
     async def scrape_multiple_persons(self, persons: List[Dict[str, str]]) -> Dict[str, List[str]]:
         """

@@ -126,6 +126,15 @@ async def get_missing_persons(
     # 전체 개수 (필터 적용 후)
     total_count = query.count()
 
+    # 사진 URL을 full URL로 변환 (백엔드 서버 기준)
+    def get_photo_urls(photo_urls_str):
+        if not photo_urls_str:
+            return []
+        # 상대 경로를 절대 URL로 변환
+        # 예: "downloaded_photos/6048080/photo_0.jpg" -> "/photos/6048080/photo_0.jpg"
+        paths = photo_urls_str.split(",")
+        return [f"/photos/{path.split('/')[-2]}/{path.split('/')[-1]}" for path in paths if path]
+
     return {
         "total": total_count,
         "items": [
@@ -142,7 +151,7 @@ async def get_missing_persons(
                 "status": p.status,
                 "resolved_at": p.resolved_at.isoformat() if p.resolved_at else None,
                 # 사진 정보
-                "photo_urls": p.photo_urls.split(",") if p.photo_urls else [],
+                "photo_urls": get_photo_urls(p.photo_urls),
                 "photo_count": p.photo_count or 0,
             }
             for p in persons

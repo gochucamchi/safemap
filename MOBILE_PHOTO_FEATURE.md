@@ -50,7 +50,7 @@
 
 #### 1. 백엔드 준비
 ```bash
-# 백엔드 실행 (Codespaces)
+# 백엔드 실행
 cd backend
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
@@ -181,30 +181,14 @@ curl -X POST "http://localhost:8000/api/v1/sync/missing-persons?scrape_photos=tr
 export const API_BASE_URL = 'https://nightmarish-vampire-pqxqw7v7hrq7p-8000.app.github.dev';
 ```
 
-### 문제 2: 403 Forbidden (Codespaces)
-**원인**: GitHub Codespaces 네트워크 제한
-
-**해결**: 로컬 환경에서 실행
-```bash
-# 로컬에서 백엔드 실행
-cd backend
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload
-
-# API_BASE_URL을 localhost로 변경
-export const API_BASE_URL = 'http://localhost:8000';
-```
-
-### 문제 3: 이미지 로딩이 느림
+### 문제 2: 이미지 로딩이 느림
 **원인**: 고해상도 이미지
 
 **해결**:
 - 이미지 크기 최적화 (향후 개선)
 - 로딩 인디케이터 추가 (현재 구현됨)
 
-### 문제 4: 모달이 열리지 않음
+### 문제 3: 모달이 열리지 않음
 **원인**: TypeScript 에러
 
 **해결**:

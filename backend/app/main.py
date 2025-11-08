@@ -70,21 +70,32 @@ class AutoSyncManager:
                 await asyncio.sleep(60)
     
     async def _run_sync(self):
-        """동기화 실행"""
+        """동기화 실행 (데이터 + 사진)"""
         try:
             from app.services.data_sync_service import DataSyncService
-            
+
             service = DataSyncService(
                 api_key=self.api_key,
                 esntl_id=self.esntl_id
             )
-            
-            result = await service.sync_all_data(max_pages=50)
-            
+
+            # 데이터 동기화 + 사진 스크랩 (최대 100명)
+            result = await service.sync_all_data(
+                max_pages=50,
+                scrape_photos=True,
+                max_photo_persons=100
+            )
+
             if result["success"]:
                 stats = service.get_statistics()
                 print(f"\n📊 현재 DB: {stats['total_count']}건")
-            
+
+                # 사진 스크랩 결과 출력
+                if "photo_scraping" in result:
+                    photo_stats = result["photo_scraping"]
+                    print(f"📸 사진 스크랩: {photo_stats.get('success_count', 0)}명 성공, "
+                          f"{photo_stats.get('total_photos', 0)}장 다운로드")
+
         except Exception as e:
             print(f"❌ 동기화 실패: {e}")
             import traceback
@@ -214,27 +225,31 @@ async def sync_status():
 
 # 수동 동기화 트리거
 @app.post("/api/v1/sync/trigger")
-async def trigger_sync():
-    """수동으로 동기화 실행"""
+async def trigger_sync(scrape_photos: bool = True, max_photo_persons: int = 100):
+    """수동으로 동기화 실행 (데이터 + 사진)"""
     if not sync_manager:
         return {
             "success": False,
             "message": "Auto-sync is not configured"
         }
-    
-    print("\n🔄 수동 동기화 요청")
-    
+
+    print(f"\n🔄 수동 동기화 요청 (사진 스크랩: {scrape_photos})")
+
     try:
         from app.services.data_sync_service import DataSyncService
-        
+
         service = DataSyncService(
             api_key=sync_manager.api_key,
             esntl_id=sync_manager.esntl_id
         )
-        
-        result = await service.sync_all_data(max_pages=50)
+
+        result = await service.sync_all_data(
+            max_pages=50,
+            scrape_photos=scrape_photos,
+            max_photo_persons=max_photo_persons
+        )
         return result
-    
+
     except Exception as e:
         return {
             "success": False,

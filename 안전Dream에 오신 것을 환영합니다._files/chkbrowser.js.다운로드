@@ -1,0 +1,75 @@
+function get_browser_info() {
+    var ua = navigator.userAgent, tem, M = ua.match(/(opera|chrome|safari|firefox|edge|msie|trident(?=\/))\/?\s*(\d+)/i) || [];
+    if (/trident/i.test(M[1])) {
+        tem = /\brv[ :]+(\d+)/g.exec(ua) || [];
+        return { name: 'IE', version: (tem[1] || '') };
+    }
+    if (M[1] === 'Chrome') {
+        tem = ua.match(/\bOPR\/(\d+)/)
+        if (tem != null) { return { name: 'Opera', version: tem[1] }; }
+    }
+    M = M[2] ? [M[1], M[2]] : [navigator.appName, navigator.appVersion, '-?'];
+    if ((tem = ua.match(/version\/(\d+)/i)) != null) { M.splice(1, 1, tem[1]); }
+    return {
+        name: M[0],
+        version: M[1]
+    };
+}
+
+var _browser = {};
+
+function detectBrowser() {
+    var uagent = navigator.userAgent.toLowerCase(),
+        match = '';
+
+    _browser.chrome = /webkit/.test(uagent) && /chrome/.test(uagent) &&
+                       !/edge/.test(uagent);
+
+    _browser.firefox = /mozilla/.test(uagent) && /firefox/.test(uagent);
+
+    _browser.msie = /msie/.test(uagent) || /trident/.test(uagent);
+                       
+
+    _browser.edge = /edge/.test(uagent);
+
+    _browser.safari = /safari/.test(uagent) && /applewebkit/.test(uagent) &&
+                       !/chrome/.test(uagent);
+
+    _browser.opr = /mozilla/.test(uagent) && /applewebkit/.test(uagent) &&
+                       /chrome/.test(uagent) && /safari/.test(uagent) &&
+                       /opr/.test(uagent);
+
+    _browser.version = '';
+
+    for (x in _browser) {
+        if (_browser[x]) {
+
+            match = uagent.match(
+                      new RegExp("(" + (x === "msie" ? "msie|edge" : x) + ")( |\/)([0-9]+)")
+                    );
+
+            if (match) {
+                _browser.version = match[3];
+            } else {
+                match = uagent.match(new RegExp("rv:([0-9]+)"));
+                _browser.version = match ? match[1] : "";
+            }
+            break;
+        }
+    }
+    _browser.opera = _browser.opr;
+    delete _browser.opr;
+}
+
+function checkBrowser() {
+    //var brInfo = get_browser_info();
+    //alert(brInfo.version);
+    //document.getElementById("m_txtBRInfo").innerHTML = navigator.userAgent;
+    detectBrowser();
+    if (_browser.edge && _browser.version==12) {
+        //doDisable();
+        //alert(_browser.version);
+        alert("Microsoft Edge브라우저의 경우 10586 버젼부터 지원됩니다.\n동작하지 않을 경우 윈도우를 업데이트 해 주시기 바랍니다.");
+    }
+
+}

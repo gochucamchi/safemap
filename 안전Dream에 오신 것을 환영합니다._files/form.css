@@ -1,0 +1,188 @@
+/* --  Input  -- */
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+input[type="url"],
+input[type="tel"],
+textarea {
+    height: 40px;
+    width: 100%;
+	background: #fff;
+    border:1px solid #ccd1d9;
+    border-radius: 0;
+    color: #000;
+    padding: 0px 10px;
+    opacity: 0.7;
+    -webkit-transition: 0.2s border-color, 0.2s opacity;
+    transition: 0.2s border-color, 0.2s opacity;
+}
+
+textarea {padding: 10px 10px;min-height: 80px;resize: vertical;}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+input[type="url"]:focus,
+input[type="tel"]:focus,
+textarea:focus {border-color: #1aacb3; opacity: 1;background-color: #f4f4f4;}
+
+
+/* 폼 요소 디자인 */
+.item-input { position:relative; display:inline-block; margin:0 2% 5px 0; vertical-align: middle;}
+.item-input + input {margin-top: 5px;}
+.item-input + input + input {margin-top: 5px;}
+.pull-right + input {margin-top: 5px;}
+.pull-right + input + input {margin-top: 5px;}
+
+table.tbl_02 input { width:100%; }
+input:-ms-input-placeholder { color: #b7bdc7; }
+input::-webkit-input-placeholder { color: #b7bdc7; }
+input::-moz-placeholder { color: #b7bdc7; }
+
+input[type="checkbox"],input[type="radio"]{border:none;}
+input[type="file"] {border:none;}
+input[readonly],
+input[disabled],
+textarea[readonly],
+textarea[disabled] {background-color: #f1f1f1; border-color: #dedede;}
+
+.checks {position: relative;min-height: 35px;line-height: 35px;/*padding-top:5px;*/}
+
+.checks input[type="checkbox"] {/* 실제 체크박스는 화면에서 숨김 */position: absolute;width: 1px; height: 1px; padding: 0; margin: -1px;overflow: hidden; clip:rect(0,0,0,0); border: 0;}
+.checks input[type="checkbox"] + label {display: inline-block; font-weight: 400;position: relative;cursor: pointer;padding-right:10px;/*top:-3px;*/-webkit-user-select: none;-moz-user-select: none;-ms-user-select: none;}
+.checks input[type="checkbox"] + label:before {
+    /* 가짜 체크박스 */
+    content: '';
+    display: inline-block;
+    width: 20px; /*  체크박스의 너비를 지정 */
+    height: 20px; /*  체크박스의 높이를 지정 */
+    line-height: 20px; /* 세로정렬을 위해 높이값과 일치 */
+    margin: -2px 8px 0 0;
+    text-align: center;
+    vertical-align: middle;
+    background: #fff;
+    border: 1px solid #ccd1d9;
+    border-radius : 3px;
+    transition: all .3s ease-out;
+}
+.checks input[type="checkbox"] + label:active:before,
+.checks input[type="checkbox"]:checked + label:active:before {
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05), inset 0px 1px 3px rgba(0,0,0,0.1);
+}
+.checks input[type="checkbox"]:checked + label:before {
+    /* 체크박스를 체크했을때  */
+    content: '';
+    background: #4cb8da url(/static/home/new_images/checked.png) no-repeat;
+    border-color: #4cb8da;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05), inset 0 -15px 10px -12px rgba(0,0,0,0.05), inset 0 15px 10px -12px rgba(255,255,255,0.1);
+}
+
+.checks.hidden_lab input[type="checkbox"] + label { padding-right:0; }/* 체크박스에 라벨을 숨길때  */
+.checks.hidden_lab input[type="checkbox"] + label:before { margin-right:0; }
+
+@keyframes radioMotion {
+	0% {transform: scale(0,0);}
+	100% {transform: scale(1,1);}
+}
+.checks input[type="radio"] {position: absolute;width: 1px;height: 1px;padding: 0;margin: -1px;overflow: hidden;clip:rect(0,0,0,0);border: 0;}
+.checks input[type="radio"] + label {
+    display: inline-block;
+    position: relative;
+    padding-left: 27px;
+    padding-right: 8px;
+    cursor: pointer;
+    font-weight: 400;
+    margin-bottom: 2px;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+.checks input[type="radio"] + label:before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 22px;
+    height: 22px;
+    margin-top: -11px;
+    text-align: center;
+    background: #fff;
+    border: 1px solid #ccd1d9;
+    border-radius: 100%;
+}
+.checks input[type="radio"] + label:after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    margin-top: -6px;
+    left: 5px;
+    width: 12px;
+    height: 12px;
+}
+.checks input[type="radio"] + label:before,
+.checks input[type="radio"] + label:after {transition: all .3s ease-in;}
+.checks input[type="radio"] + label:active:before,
+.checks input[type="radio"]:checked + label:active:before {box-shadow: 0 1px 2px rgba(0,0,0,0.05), inset 0px 1px 3px rgba(0,0,0,0.1);}
+.checks input[type="radio"]:checked + label:before {background: #fff; border-color: #4cb8da;}
+.checks input[type="radio"]:checked + label:after {
+    content: '';
+    position: absolute;
+    background: #4cb8da;
+    border-radius: 100%;
+    box-shadow: inset 0px 0px 5px rgba(0,0,0,0.3);
+    animation: .2s ease-in-out 0s 1 radioMotion;
+    transform-origin: center center;
+}
+
+.checks.hidden_lab input[type="radio"] + label { padding-right:0; }/* 라디오버튼에 라벨을 숨길때  */
+.checks.hidden_lab input[type="radio"] + label:before { margin-right:0; }
+.checks.hidden_lab input[type="radio"] + label .hidden { position:relative; }
+
+.checks input[disabled] + label:before {background-color: #f1f1f1; border-color: #dedede;}/* 체크박스, 라디오버튼 disabled  */
+.checks input[disabled]:checked + label:before {background-color: #f1f1f1; border-color: #dedede;}/* 체크박스, 라디오버튼 disabled  */
+.checks input[type="checkbox"]:checked:disabled + label:before {background-color: #a4d9ea; border-color: #9bcfdf;}/* 체크박스 disabled Background-color */
+.checks input[type="radio"]:checked:disabled + label:after {background-color: #a4d9ea;}/* 체크박스 disabled Background-color */
+
+
+.select_style {display:inline-block;margin:0;margin-bottom: 2px;padding:0;padding-right:20px;vertical-align:middle;border: 1px solid #e6e8ec; min-width: 70px;width:auto;overflow: hidden;background: #fff url("/static/home/new_images/btn_select.png") no-repeat 100% 50%;}
+.select_style select {padding: 1px 8px 2px 8px; height:38px; opacity: 0.5; width: 150%;color:#5c5c5c;border: none;box-shadow: none;background: transparent;background-image: none;-webkit-appearance: none;}
+.select_style select:focus {outline: none;background-color: #f4f4f4;opacity: 1;}
+.select_style select::-ms-expand {display: none;}
+.select_style.disabled {background-color: #f1f1f1; border-color: #dedede;}/* 셀렉트 박스 disabled */
+
+.mark-s:after {
+    content:"*";
+    display:inline-block;
+    color: #fd5451;
+    font-weight: 700;
+    font-size: 1.2em;
+    padding-left: 5px;
+} /* 필수입력 asterisk */
+
+.form-police .form-group {font-size:0.95em; margin-bottom: 10px;}
+.form-police .form-group label + [class*="col-"] {padding-left: 0;}
+.form-police .select-pull > div:last-child {width: calc( 100% - 120px);}
+.form-police .select-pull label {text-align: right;}
+.form-police .label-pull > div:last-child {width: calc( 100% - 70px);}
+.form-police .label-pull label {text-align: right;}
+.form-police .date-picker {display: inline-block;text-align: center;line-height: 40px;}
+.form-police .date-picker .item-input {margin: 0;width: calc( 50% - 10px );}
+.form-police .date-picker .item-input:first-child {float: left;}
+.form-police .date-picker .item-input:last-child {float: right;}
+.form-police .date-picker:after {content: "";display: table;clear: both;}
+.form-police .input-group-addon {padding: 0 10px;border-radius: 0;}
+.form-police .input-group.date .calendar {display: block;width:21px;height:20px;background:url(/static/home/new_images/btn_cal.png) no-repeat center;}
+.form-footer {padding-top: 20px;text-align: center;border-top: 1px solid #e1e7f4;}
+
+@media only screen and (max-width: 767px) {
+    .form-police .form-group {font-size: 1em;}
+    .form-police .form-group label {margin-top: 10px;margin-bottom: 5px;}
+    .form-police .form-group .checks label {margin-top: auto;margin-bottom: auto;}
+    .form-police .form-group label + [class*="col-"] {padding-left: 15px;}
+}
+.noDottList li {background:none;padding:0;}

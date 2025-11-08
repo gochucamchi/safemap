@@ -1,0 +1,101 @@
+/* webfont */
+@font-face {
+	font-family: 'Nanum Gothic';
+	font-style: normal;
+	font-weight: 400;
+	src: url(/static/home/fonts/NanumGothic-Regular.eot);
+	src: url(/static/home/fonts/NanumGothic-Regular.eot?#iefix) format('embedded-opentype'),
+	     url(/static/home/fonts/NanumGothic-Regular.woff2) format('woff2'),
+		   url(/static/home/fonts/NanumGothic-Regular.woff) format('woff'),
+		   url(/static/home/fonts/NanumGothic-Regular.ttf) format('truetype');
+}
+
+@font-face {
+  font-family: 'Nanum Gothic';
+  font-style: normal;
+  font-weight: 700;
+  src: url(/static/home/fonts/NanumGothic-Bold.eot);
+	src: url(/static/home/fonts/NanumGothic-Bold.eot?#iefix) format('embedded-opentype'),
+		   url(/static/home/fonts/NanumGothic-Bold.woff2) format('woff2'),
+		   url(/static/home/fonts/NanumGothic-Bold.woff) format('woff'),
+		   url(/static/home/fonts/NanumGothic-Bold.ttf) format('truetype');
+}
+
+@font-face {
+  font-family: 'Roboto';
+  font-style: normal;
+  font-weight: 400;
+  src: url(/static/home/fonts/Roboto-Regular.woff2) format('woff2'),
+       url(/static/home/fonts/Roboto-Regular.woff) format('woff'),
+       url(/static/home/fonts/Roboto-Regular.otf) format('opentype'),
+       url(/static/home/fonts/Roboto-Regular.ttf) format('truetype');
+}
+
+@font-face {
+  font-family: 'Roboto';
+  font-style: normal;
+  font-weight: 700;
+  src: url(/static/home/fonts/Roboto-Bold.woff2) format('woff2'),
+       url(/static/home/fonts/Roboto-Bold.woff) format('woff'),
+       url(/static/home/fonts/Roboto-Bold.otf) format('opentype'),
+       url(/static/home/fonts/Roboto-Bold.ttf) format('truetype');
+}
+
+/* -- typography -- */
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  overflow-x: hidden;
+  font-size:14px;
+  color: #656d78;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-weight: 700;
+  margin-top: 0px;
+  margin-bottom: 20px;
+  color: #363b43;
+}
+
+strong {color: #363b43; font-weight: 700;}
+
+a {
+  color: #656d78;
+  text-decoration: none;
+  -webkit-transition: 0.2s opacity;
+  transition: 0.2s opacity;
+}
+
+a:hover, a:focus {
+  text-decoration: none;
+  outline: none;
+  opacity: 0.8;
+  color: #363b43;
+}
+
+div, p {word-wrap: break-word; word-break: keep-all;}
+
+.main-color {color: #2c53b0;}
+.white-text {color: #FFF;}
+.blue-text {color: #1dc6fc;}
+.orange-text {color: #fdaf3f !important;}
+.h-light {color: #fd5451 !important;}
+
+.roboto {font-family: 'Roboto',sans-serif; font-weight: 400;}
+.roboto-b {font-family: 'Roboto',sans-serif; font-weight: 700;}
+
+::-moz-selection {
+  background-color: #6195FF;
+  color: #FFF;
+}
+
+::selection {
+  background-color: #6195FF;
+  color: #FFF;
+}
+
+@media (min-width: 992px) {
+  body {font-size: 15px;}
+  body, a, select, input, button, textarea {font-family: 'Nanum Gothic',나눔고딕,sans-serif;}
+  h1, h2, h3, h4, h5, h6 {font-family: 'Nanum Gothic',나눔고딕,sans-serif;}
+}

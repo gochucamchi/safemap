@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Float
+from sqlalchemy import Column, Integer, String, DateTime, Float, JSON, Text
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -16,6 +16,12 @@ class MissingPerson(Base):
     gender = Column(String(1), nullable=True)  # 성별 (M/F)
     latitude = Column(Float, nullable=True)  # 위도
     longitude = Column(Float, nullable=True)  # 경도
+
+    # 사진 정보
+    photo_urls = Column(Text, nullable=True)  # 쉼표로 구분된 사진 URL 리스트
+    photo_count = Column(Integer, default=0)  # 사진 개수
+    photos_downloaded = Column(DateTime, nullable=True)  # 사진 다운로드 일시
+
     status = Column(String(20), default="missing", index=True)  # 상태 (missing/resolved)
     resolved_at = Column(DateTime, nullable=True)  # 실종 해제 일시
     created_at = Column(DateTime)  # 생성일시

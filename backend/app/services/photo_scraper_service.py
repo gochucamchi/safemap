@@ -11,14 +11,13 @@ import hashlib
 from datetime import datetime
 from typing import List, Dict, Optional
 import httpx
-from bs4 import BeautifulSoup
 
 
 class PhotoScraperService:
     """실종자 사진 스크랩 서비스"""
 
-    # 플레이스홀더 이미지 크기들 (건너뛰기)
-    PLACEHOLDER_SIZES = {4098, 8194, 12290, 16386, 20482}
+    # 플레이스홀더 이미지 크기 (건너뛰기)
+    PLACEHOLDER_SIZE = 2860
 
     def __init__(self, delay: float = 3.0, max_retries: int = 3):
         """
@@ -85,13 +84,14 @@ class PhotoScraperService:
         특정 실종자의 사진 URL 스크랩
 
         Args:
-            external_id: 실종자 ID (wrdsn)
+            external_id: 실종자 ID (msspsnIdntfccd)
             name: 실종자 이름 (로깅용)
 
         Returns:
             사진 URL 리스트
         """
-        detail_url = f"https://www.safe182.go.kr/api/lcm/medaryListByWrdsn.do?wrdsn={external_id}"
+        # 1. 상세 페이지 먼저 방문 (세션 생성)
+        detail_url = f"https://www.safe182.go.kr/home/lcm/lcmMssGet.do?msspsnIdntfccd={external_id}&rptDscd=2"
 
         print(f"\n{'='*80}")
         print(f"📸 사진 스크랩: {name} (ID: {external_id})")
@@ -105,45 +105,45 @@ class PhotoScraperService:
 
         print("  ✅ 상세 페이지 접속 성공")
 
-        # HTML 파싱
-        soup = BeautifulSoup(response.text, 'html.parser')
-        img_tags = soup.find_all('img')
-
-        if not img_tags:
-            print("  ℹ️  이미지 태그 없음")
-            return []
-
+        # 2. 세션 유지하면서 사진 다운로드
         photo_urls = []
         seen_hashes = set()
 
-        # 각 이미지 확인
-        for idx, img in enumerate(img_tags):
-            src = img.get('src', '')
-            if not src or not src.startswith('http'):
-                continue
+        # 최대 10개까지 시도 (인덱스 기반)
+        for idx in range(10):
+            photo_url = f"https://www.safe182.go.kr/home/lcm/blobImgListView.do?tknphotoFileIdx={idx}"
 
-            # 이미지 다운로드 (크기 확인용)
-            img_response = await self._download_with_retry(src)
+            # 이미지 다운로드
+            img_response = await self._download_with_retry(photo_url)
             if not img_response:
-                continue
+                print(f"  [{idx}] ❌ 다운로드 실패")
+                break
 
             img_data = img_response.content
             img_size = len(img_data)
+
+            # 너무 작은 파일은 "no image"일 가능성
+            if img_size < 1000:
+                print(f"  [{idx}] ⏭️  너무 작음 ({img_size} bytes) - 건너뜀")
+                break
+
+            # 플레이스홀더 필터링 (정확히 2860 bytes)
+            if img_size == 2860:
+                print(f"  [{idx}] 🚫 플레이스홀더 발견 - 더 이상 사진 없음")
+                break
+
+            # MD5 해시 계산
             img_hash = self._get_md5(img_data)
 
-            # 플레이스홀더 필터링
-            if img_size in self.PLACEHOLDER_SIZES:
-                print(f"  [{idx}] 🚫 플레이스홀더 발견 ({img_size} bytes) - 스킵")
-                break  # 플레이스홀더가 나오면 더 이상 사진 없음
-
-            # 중복 필터링
+            # 중복 체크
             if img_hash in seen_hashes:
                 print(f"  [{idx}] 🔁 중복 사진 - 스킵")
                 continue
 
-            print(f"  [{idx}] ✅ 고유한 사진 발견 ({img_size} bytes, MD5: {img_hash[:8]}...)")
-            photo_urls.append(src)
+            # 고유한 사진
             seen_hashes.add(img_hash)
+            photo_urls.append(photo_url)
+            print(f"  [{idx}] ✅ 고유한 사진! ({img_size} bytes, MD5: {img_hash[:8]}...)")
 
             # Rate limiting 방지
             await asyncio.sleep(0.5)

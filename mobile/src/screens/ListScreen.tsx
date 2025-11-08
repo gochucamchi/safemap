@@ -11,6 +11,7 @@ import {
 import { api } from '../services/api';
 import DateFilter from '../components/DateFilter';
 import AdvancedFilterModal from '../components/AdvancedFilterModal';
+import PersonDetailModal from '../components/PersonDetailModal';
 
 export default function ListScreen() {
   const [missingPersons, setMissingPersons] = useState([]);
@@ -20,6 +21,8 @@ export default function ListScreen() {
   const [activeTab, setActiveTab] = useState<'missing' | 'resolved'>('missing');
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState<any>({});
+  const [selectedPerson, setSelectedPerson] = useState<any>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
 
   // 데이터 로드 (모든 필터 적용)
   const loadData = async (days = 30, status = 'missing', filters = {}) => {
@@ -99,12 +102,24 @@ export default function ListScreen() {
     loadData(selectedDays, activeTab, advancedFilters);
   };
 
+  // 사람 상세 정보 보기 핸들러
+  const handlePersonPress = (person: any) => {
+    setSelectedPerson(person);
+    setShowDetailModal(true);
+  };
+
+  // 상세 모달 닫기 핸들러
+  const handleCloseDetailModal = () => {
+    setShowDetailModal(false);
+    setSelectedPerson(null);
+  };
+
   // 리스트 아이템 렌더링
   const renderItem = ({ item }) => {
     const isMissing = item.status === 'missing';
 
     return (
-      <TouchableOpacity style={styles.card}>
+      <TouchableOpacity style={styles.card} onPress={() => handlePersonPress(item)}>
         <View style={styles.cardHeader}>
           <Text style={styles.date}>
             {new Date(item.missing_date).toLocaleDateString('ko-KR', {
@@ -235,6 +250,13 @@ export default function ListScreen() {
         onClose={() => setShowAdvancedFilter(false)}
         onApply={handleAdvancedFilterApply}
         initialFilters={advancedFilters}
+      />
+
+      {/* 상세 정보 모달 */}
+      <PersonDetailModal
+        visible={showDetailModal}
+        person={selectedPerson}
+        onClose={handleCloseDetailModal}
       />
     </View>
   );

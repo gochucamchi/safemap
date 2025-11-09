@@ -34,9 +34,10 @@ class DataSyncService:
         self,
         max_pages: int = 50,
         scrape_photos: bool = False,
-        max_photo_persons: int = 100,
+        max_photo_persons: int = None,
         geocode_addresses: bool = False,
-        max_geocode_persons: int = 100
+        max_geocode_persons: int = None,
+        is_initial_sync: bool = False
     ) -> Dict:
         """
         모든 데이터 동기화 (최적화)
@@ -44,9 +45,10 @@ class DataSyncService:
         Args:
             max_pages: 최대 페이지 수
             scrape_photos: 사진 스크랩 여부
-            max_photo_persons: 사진 스크랩할 최대 인원 (rate limiting 방지)
+            max_photo_persons: 사진 스크랩할 최대 인원 (None이면 전체)
             geocode_addresses: 주소 지오코딩 여부
-            max_geocode_persons: 지오코딩할 최대 인원
+            max_geocode_persons: 지오코딩할 최대 인원 (None이면 전체)
+            is_initial_sync: 첫 실행 여부 (True면 전체 처리)
         """
         print("\n" + "="*60)
         print("🚀 안전Dream API 데이터 동기화 시작")
@@ -227,7 +229,8 @@ class DataSyncService:
                 try:
                     photo_result = await self._scrape_photos_for_missing_persons(
                         db,
-                        max_persons=max_photo_persons
+                        max_persons=max_photo_persons,
+                        is_initial_sync=is_initial_sync
                     )
                     result["photos_scraped"] = photo_result["persons_scraped"]
                     result["total_photos"] = photo_result["total_photos"]
@@ -248,7 +251,8 @@ class DataSyncService:
                 try:
                     geocode_result = await self._geocode_missing_persons(
                         db,
-                        max_persons=max_geocode_persons
+                        max_persons=max_geocode_persons,
+                        is_initial_sync=is_initial_sync
                     )
                     result["geocoded"] = geocode_result["geocoded"]
 
@@ -332,34 +336,52 @@ class DataSyncService:
             db.add(new_person)
             return "added"
     
-    async def _scrape_photos_for_missing_persons(self, db: Session, max_persons: int = 100) -> Dict:
+    async def _scrape_photos_for_missing_persons(
+        self,
+        db: Session,
+        max_persons: int = None,
+        is_initial_sync: bool = False
+    ) -> Dict:
         """
         사진이 없는 실종자들의 사진 스크랩
 
         Args:
             db: 데이터베이스 세션
-            max_persons: 최대 스크랩 인원
+            max_persons: 최대 스크랩 인원 (None이면 전체)
+            is_initial_sync: 첫 실행 여부 (True면 전체, False면 최근 추가만)
 
         Returns:
             {"persons_scraped": int, "total_photos": int}
         """
         from app.services.photo_scraper_service import PhotoScraperService
+        from datetime import timedelta
 
-        # 사진이 없는 실종자 전체 조회 (status가 missing인 사람만)
-        all_persons_without_photos = db.query(MissingPerson).filter(
+        # 사진이 없는 실종자 조회
+        query = db.query(MissingPerson).filter(
             MissingPerson.status == "missing",
             (MissingPerson.photo_urls.is_(None)) | (MissingPerson.photo_urls == "")
-        ).all()
+        )
+
+        # 정기 동기화일 경우 최근 1시간 이내 추가된 것만
+        if not is_initial_sync:
+            recent_time = datetime.now() - timedelta(hours=1)
+            query = query.filter(MissingPerson.created_at >= recent_time)
+            print(f"  ℹ️  최근 1시간 이내 추가된 사람만 확인\n")
+
+        all_persons_without_photos = query.all()
 
         if not all_persons_without_photos:
             print("  ℹ️  사진이 필요한 실종자 없음\n")
             return {"persons_scraped": 0, "total_photos": 0}
 
-        # 전체 리스트에서 뒤에서부터 max_persons명만 선택
-        # (가장 최근에 DB에 추가된 순서대로)
-        persons_without_photos = all_persons_without_photos[-max_persons:]
-
-        print(f"  📋 사진 스크랩 대상: {len(persons_without_photos)}명 (전체 {len(all_persons_without_photos)}명 중)\n")
+        # max_persons 제한 (None이면 전체)
+        if max_persons is not None:
+            # 전체 리스트에서 뒤에서부터 max_persons명만 선택
+            persons_without_photos = all_persons_without_photos[-max_persons:]
+            print(f"  📋 사진 스크랩 대상: {len(persons_without_photos)}명 (전체 {len(all_persons_without_photos)}명 중)\n")
+        else:
+            persons_without_photos = all_persons_without_photos
+            print(f"  📋 사진 스크랩 대상: {len(persons_without_photos)}명 (전체 처리)\n")
 
         # 스크랩할 정보 준비
         persons_to_scrape = [
@@ -399,19 +421,26 @@ class DataSyncService:
             "total_photos": total_photos
         }
 
-    async def _geocode_missing_persons(self, db: Session, max_persons: int = 100) -> Dict:
+    async def _geocode_missing_persons(
+        self,
+        db: Session,
+        max_persons: int = None,
+        is_initial_sync: bool = False
+    ) -> Dict:
         """
         지오코딩이 안 된 실종자들의 주소 → 좌표 변환
 
         Args:
             db: 데이터베이스 세션
-            max_persons: 최대 지오코딩 인원
+            max_persons: 최대 지오코딩 인원 (None이면 전체)
+            is_initial_sync: 첫 실행 여부 (True면 전체, False면 최근 추가만)
 
         Returns:
             {"geocoded": int}
         """
         import os
         from app.services.naver_geocoding_service import NaverGeocodingService
+        from datetime import timedelta
 
         # Naver API 키 확인
         client_id = os.getenv("NAVER_CLIENT_ID")
@@ -421,20 +450,32 @@ class DataSyncService:
             print("  ⚠️  Naver API 키가 설정되지 않음. 지오코딩 건너뜀.\n")
             return {"geocoded": 0}
 
-        # 지오코딩이 안 된 실종자 전체 조회
-        all_persons_without_geocoding = db.query(MissingPerson).filter(
+        # 지오코딩이 안 된 실종자 조회
+        query = db.query(MissingPerson).filter(
             MissingPerson.status == "missing",
             (MissingPerson.latitude.is_(None)) | (MissingPerson.longitude.is_(None))
-        ).all()
+        )
+
+        # 정기 동기화일 경우 최근 1시간 이내 추가된 것만
+        if not is_initial_sync:
+            recent_time = datetime.now() - timedelta(hours=1)
+            query = query.filter(MissingPerson.created_at >= recent_time)
+            print(f"  ℹ️  최근 1시간 이내 추가된 사람만 확인\n")
+
+        all_persons_without_geocoding = query.all()
 
         if not all_persons_without_geocoding:
             print("  ℹ️  지오코딩이 필요한 실종자 없음\n")
             return {"geocoded": 0}
 
-        # 전체 리스트에서 뒤에서부터 max_persons명만 선택
-        persons_without_geocoding = all_persons_without_geocoding[-max_persons:]
-
-        print(f"  📋 지오코딩 대상: {len(persons_without_geocoding)}명 (전체 {len(all_persons_without_geocoding)}명 중)\n")
+        # max_persons 제한 (None이면 전체)
+        if max_persons is not None:
+            # 전체 리스트에서 뒤에서부터 max_persons명만 선택
+            persons_without_geocoding = all_persons_without_geocoding[-max_persons:]
+            print(f"  📋 지오코딩 대상: {len(persons_without_geocoding)}명 (전체 {len(all_persons_without_geocoding)}명 중)\n")
+        else:
+            persons_without_geocoding = all_persons_without_geocoding
+            print(f"  📋 지오코딩 대상: {len(persons_without_geocoding)}명 (전체 처리)\n")
 
         # 지오코딩 서비스 초기화
         geocoding_service = NaverGeocodingService(client_id, client_secret)

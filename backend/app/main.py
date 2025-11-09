@@ -25,12 +25,13 @@ from app.api import missing_persons
 # 자동 동기화 매니저
 class AutoSyncManager:
     """자동 동기화 매니저 (30분마다)"""
-    
+
     def __init__(self, api_key: str, esntl_id: str = "10000855"):
         self.api_key = api_key
         self.esntl_id = esntl_id
         self.task = None
         self.is_running = False
+        self.is_first_run = True  # 첫 실행 플래그
     
     async def start(self):
         """자동 동기화 시작"""
@@ -70,7 +71,7 @@ class AutoSyncManager:
                 await asyncio.sleep(60)
     
     async def _run_sync(self):
-        """동기화 실행 (데이터 + 사진)"""
+        """동기화 실행 (데이터 + 사진 + 지오코딩)"""
         try:
             from app.services.data_sync_service import DataSyncService
 
@@ -79,14 +80,29 @@ class AutoSyncManager:
                 esntl_id=self.esntl_id
             )
 
-            # 데이터 동기화 + 사진 스크랩 + 지오코딩 (최대 100명씩)
-            result = await service.sync_all_data(
-                max_pages=50,
-                scrape_photos=True,
-                max_photo_persons=100,
-                geocode_addresses=True,
-                max_geocode_persons=100
-            )
+            # 첫 실행: 모든 데이터 처리
+            if self.is_first_run:
+                print("\n🎯 첫 실행: 모든 사진 + 모든 지오코딩 처리")
+                result = await service.sync_all_data(
+                    max_pages=50,
+                    scrape_photos=True,
+                    max_photo_persons=None,  # 전체
+                    geocode_addresses=True,
+                    max_geocode_persons=None,  # 전체
+                    is_initial_sync=True
+                )
+                self.is_first_run = False
+            else:
+                # 정기 실행: 최근 추가된 것만 처리
+                print("\n🔄 정기 동기화: 새로운 데이터만 처리")
+                result = await service.sync_all_data(
+                    max_pages=50,
+                    scrape_photos=True,
+                    max_photo_persons=None,  # 최근 1시간 이내 전체
+                    geocode_addresses=True,
+                    max_geocode_persons=None,  # 최근 1시간 이내 전체
+                    is_initial_sync=False
+                )
 
             if result["success"]:
                 stats = service.get_statistics()
@@ -232,18 +248,24 @@ async def sync_status():
 @app.post("/api/v1/sync/trigger")
 async def trigger_sync(
     scrape_photos: bool = True,
-    max_photo_persons: int = 100,
     geocode_addresses: bool = True,
-    max_geocode_persons: int = 100
+    process_all: bool = False
 ):
-    """수동으로 동기화 실행 (데이터 + 사진 + 지오코딩)"""
+    """
+    수동으로 동기화 실행 (데이터 + 사진 + 지오코딩)
+
+    Args:
+        scrape_photos: 사진 스크랩 여부
+        geocode_addresses: 지오코딩 여부
+        process_all: True면 전체 처리, False면 최근 추가만
+    """
     if not sync_manager:
         return {
             "success": False,
             "message": "Auto-sync is not configured"
         }
 
-    print(f"\n🔄 수동 동기화 요청 (사진: {scrape_photos}, 지오코딩: {geocode_addresses})")
+    print(f"\n🔄 수동 동기화 요청 (사진: {scrape_photos}, 지오코딩: {geocode_addresses}, 전체: {process_all})")
 
     try:
         from app.services.data_sync_service import DataSyncService
@@ -256,9 +278,10 @@ async def trigger_sync(
         result = await service.sync_all_data(
             max_pages=50,
             scrape_photos=scrape_photos,
-            max_photo_persons=max_photo_persons,
+            max_photo_persons=None,
             geocode_addresses=geocode_addresses,
-            max_geocode_persons=max_geocode_persons
+            max_geocode_persons=None,
+            is_initial_sync=process_all
         )
         return result
 

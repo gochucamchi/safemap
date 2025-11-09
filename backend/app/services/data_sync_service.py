@@ -30,7 +30,14 @@ class DataSyncService:
         
         self.api_client = SafeDreamAPI(api_key=api_key, esntl_id=esntl_id)
     
-    async def sync_all_data(self, max_pages: int = 50, scrape_photos: bool = False, max_photo_persons: int = 100) -> Dict:
+    async def sync_all_data(
+        self,
+        max_pages: int = 50,
+        scrape_photos: bool = False,
+        max_photo_persons: int = 100,
+        geocode_addresses: bool = False,
+        max_geocode_persons: int = 100
+    ) -> Dict:
         """
         모든 데이터 동기화 (최적화)
 
@@ -38,6 +45,8 @@ class DataSyncService:
             max_pages: 최대 페이지 수
             scrape_photos: 사진 스크랩 여부
             max_photo_persons: 사진 스크랩할 최대 인원 (rate limiting 방지)
+            geocode_addresses: 주소 지오코딩 여부
+            max_geocode_persons: 지오코딩할 최대 인원
         """
         print("\n" + "="*60)
         print("🚀 안전Dream API 데이터 동기화 시작")
@@ -52,6 +61,7 @@ class DataSyncService:
             "resolved": 0,  # 실종 해제
             "photos_scraped": 0,  # 사진 스크랩한 인원
             "total_photos": 0,  # 총 수집 사진
+            "geocoded": 0,  # 지오코딩 완료 인원
             "errors": [],
             "start_time": datetime.now(),
         }
@@ -229,6 +239,26 @@ class DataSyncService:
                     import traceback
                     traceback.print_exc()
 
+            # ✅ 주소 지오코딩 (옵션)
+            if geocode_addresses:
+                print("\n" + "="*60)
+                print("🗺️  주소 지오코딩 시작")
+                print("="*60 + "\n")
+
+                try:
+                    geocode_result = await self._geocode_missing_persons(
+                        db,
+                        max_persons=max_geocode_persons
+                    )
+                    result["geocoded"] = geocode_result["geocoded"]
+
+                except Exception as e:
+                    error_msg = f"지오코딩 오류: {str(e)}"
+                    result["errors"].append(error_msg)
+                    print(f"❌ {error_msg}")
+                    import traceback
+                    traceback.print_exc()
+
             result["end_time"] = datetime.now()
             result["duration"] = (result["end_time"] - result["start_time"]).total_seconds()
 
@@ -243,6 +273,7 @@ class DataSyncService:
    • 실종 해제: {result['resolved']}건 🎉
    • 건너뜀: {result['skipped']}건
    • 사진 스크랩: {result['photos_scraped']}명 (총 {result['total_photos']}장)
+   • 지오코딩: {result['geocoded']}명
    • 에러: {len(result['errors'])}건
    • 소요 시간: {result['duration']:.2f}초
             """)
@@ -366,6 +397,82 @@ class DataSyncService:
         return {
             "persons_scraped": persons_scraped,
             "total_photos": total_photos
+        }
+
+    async def _geocode_missing_persons(self, db: Session, max_persons: int = 100) -> Dict:
+        """
+        지오코딩이 안 된 실종자들의 주소 → 좌표 변환
+
+        Args:
+            db: 데이터베이스 세션
+            max_persons: 최대 지오코딩 인원
+
+        Returns:
+            {"geocoded": int}
+        """
+        import os
+        from app.services.naver_geocoding_service import NaverGeocodingService
+
+        # Naver API 키 확인
+        client_id = os.getenv("NAVER_CLIENT_ID")
+        client_secret = os.getenv("NAVER_CLIENT_SECRET")
+
+        if not client_id or not client_secret:
+            print("  ⚠️  Naver API 키가 설정되지 않음. 지오코딩 건너뜀.\n")
+            return {"geocoded": 0}
+
+        # 지오코딩이 안 된 실종자 전체 조회
+        all_persons_without_geocoding = db.query(MissingPerson).filter(
+            MissingPerson.status == "missing",
+            (MissingPerson.latitude.is_(None)) | (MissingPerson.longitude.is_(None))
+        ).all()
+
+        if not all_persons_without_geocoding:
+            print("  ℹ️  지오코딩이 필요한 실종자 없음\n")
+            return {"geocoded": 0}
+
+        # 전체 리스트에서 뒤에서부터 max_persons명만 선택
+        persons_without_geocoding = all_persons_without_geocoding[-max_persons:]
+
+        print(f"  📋 지오코딩 대상: {len(persons_without_geocoding)}명 (전체 {len(all_persons_without_geocoding)}명 중)\n")
+
+        # 지오코딩 서비스 초기화
+        geocoding_service = NaverGeocodingService(client_id, client_secret)
+
+        # 지오코딩 처리
+        geocoded_count = 0
+
+        for idx, person in enumerate(persons_without_geocoding, 1):
+            if not person.location_address:
+                continue
+
+            try:
+                result = await geocoding_service.geocode_address(person.location_address)
+
+                if result:
+                    lat, lon = result
+                    person.latitude = lat
+                    person.longitude = lon
+                    person.updated_at = datetime.now()
+                    geocoded_count += 1
+
+                    if geocoded_count % 10 == 0:
+                        print(f"  🗺️  진행: {geocoded_count}/{len(persons_without_geocoding)} ({geocoded_count/len(persons_without_geocoding)*100:.1f}%)")
+
+                # API 부하 방지
+                if idx % 50 == 0:
+                    db.commit()
+
+            except Exception as e:
+                print(f"  ⚠️  지오코딩 실패: {person.location_address[:30]}, {str(e)}")
+                continue
+
+        db.commit()
+
+        print(f"\n  💾 DB 업데이트 완료: {geocoded_count}명 지오코딩 완료\n")
+
+        return {
+            "geocoded": geocoded_count
         }
 
     def get_statistics(self) -> Dict:

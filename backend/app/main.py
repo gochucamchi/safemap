@@ -79,11 +79,13 @@ class AutoSyncManager:
                 esntl_id=self.esntl_id
             )
 
-            # 데이터 동기화 + 사진 스크랩 (최대 100명)
+            # 데이터 동기화 + 사진 스크랩 + 지오코딩 (최대 100명씩)
             result = await service.sync_all_data(
                 max_pages=50,
                 scrape_photos=True,
-                max_photo_persons=100
+                max_photo_persons=100,
+                geocode_addresses=True,
+                max_geocode_persons=100
             )
 
             if result["success"]:
@@ -91,10 +93,13 @@ class AutoSyncManager:
                 print(f"\n📊 현재 DB: {stats['total_count']}건")
 
                 # 사진 스크랩 결과 출력
-                if "photo_scraping" in result:
-                    photo_stats = result["photo_scraping"]
-                    print(f"📸 사진 스크랩: {photo_stats.get('success_count', 0)}명 성공, "
-                          f"{photo_stats.get('total_photos', 0)}장 다운로드")
+                if "photos_scraped" in result and result["photos_scraped"] > 0:
+                    print(f"📸 사진 스크랩: {result['photos_scraped']}명 성공, "
+                          f"{result['total_photos']}장 다운로드")
+
+                # 지오코딩 결과 출력
+                if "geocoded" in result and result["geocoded"] > 0:
+                    print(f"🗺️  지오코딩: {result['geocoded']}명 완료")
 
         except Exception as e:
             print(f"❌ 동기화 실패: {e}")
@@ -225,15 +230,20 @@ async def sync_status():
 
 # 수동 동기화 트리거
 @app.post("/api/v1/sync/trigger")
-async def trigger_sync(scrape_photos: bool = True, max_photo_persons: int = 100):
-    """수동으로 동기화 실행 (데이터 + 사진)"""
+async def trigger_sync(
+    scrape_photos: bool = True,
+    max_photo_persons: int = 100,
+    geocode_addresses: bool = True,
+    max_geocode_persons: int = 100
+):
+    """수동으로 동기화 실행 (데이터 + 사진 + 지오코딩)"""
     if not sync_manager:
         return {
             "success": False,
             "message": "Auto-sync is not configured"
         }
 
-    print(f"\n🔄 수동 동기화 요청 (사진 스크랩: {scrape_photos})")
+    print(f"\n🔄 수동 동기화 요청 (사진: {scrape_photos}, 지오코딩: {geocode_addresses})")
 
     try:
         from app.services.data_sync_service import DataSyncService
@@ -246,7 +256,9 @@ async def trigger_sync(scrape_photos: bool = True, max_photo_persons: int = 100)
         result = await service.sync_all_data(
             max_pages=50,
             scrape_photos=scrape_photos,
-            max_photo_persons=max_photo_persons
+            max_photo_persons=max_photo_persons,
+            geocode_addresses=geocode_addresses,
+            max_geocode_persons=max_geocode_persons
         )
         return result
 

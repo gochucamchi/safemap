@@ -314,18 +314,21 @@ class DataSyncService:
         """
         from app.services.photo_scraper_service import PhotoScraperService
 
-        # 사진이 없는 실종자 조회 (status가 missing인 사람만)
-        # ID 내림차순으로 정렬하여 최신 실종자부터 처리
-        persons_without_photos = db.query(MissingPerson).filter(
+        # 사진이 없는 실종자 전체 조회 (status가 missing인 사람만)
+        all_persons_without_photos = db.query(MissingPerson).filter(
             MissingPerson.status == "missing",
             (MissingPerson.photo_urls.is_(None)) | (MissingPerson.photo_urls == "")
-        ).order_by(MissingPerson.id.desc()).limit(max_persons).all()
+        ).all()
 
-        if not persons_without_photos:
+        if not all_persons_without_photos:
             print("  ℹ️  사진이 필요한 실종자 없음\n")
             return {"persons_scraped": 0, "total_photos": 0}
 
-        print(f"  📋 사진 스크랩 대상: {len(persons_without_photos)}명 (최대 {max_persons}명)\n")
+        # 전체 리스트에서 뒤에서부터 max_persons명만 선택
+        # (가장 최근에 DB에 추가된 순서대로)
+        persons_without_photos = all_persons_without_photos[-max_persons:]
+
+        print(f"  📋 사진 스크랩 대상: {len(persons_without_photos)}명 (전체 {len(all_persons_without_photos)}명 중)\n")
 
         # 스크랩할 정보 준비
         persons_to_scrape = [

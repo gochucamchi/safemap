@@ -28,6 +28,26 @@ export default function PersonDetailModal({ visible, person, onClose }: PersonDe
 
   const photoUrls = person.photo_urls || [];
   const hasPhotos = photoUrls.length > 0;
+  const isResolved = person.status === 'resolved';
+
+  // 현재 나이 계산
+  const getCurrentAge = () => {
+    if (!person.age || !person.missing_date) return null;
+    const missingYear = new Date(person.missing_date).getFullYear();
+    const currentYear = new Date().getFullYear();
+    const yearsPassed = currentYear - missingYear;
+    return person.age + yearsPassed;
+  };
+
+  const currentAge = getCurrentAge();
+
+  // InfoRow 컴포넌트
+  const InfoRow = ({ label, value }: { label: string; value: string }) => (
+    <View style={styles.infoRow}>
+      <Text style={styles.infoLabel}>{label}</Text>
+      <Text style={styles.infoValue}>{value}</Text>
+    </View>
+  );
 
   return (
     <Modal
@@ -84,70 +104,65 @@ export default function PersonDetailModal({ visible, person, onClose }: PersonDe
               </View>
             )}
 
-            {/* 기본 정보 */}
-            <View style={styles.infoSection}>
-              <Text style={styles.sectionTitle}>📋 기본 정보</Text>
-
-              {person.age && person.gender && (
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>성별 / 나이</Text>
-                  <Text style={styles.infoValue}>
-                    {person.gender === 'M' ? '남성' : '여성'} · {person.age}세
-                  </Text>
-                </View>
-              )}
-
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>실종일</Text>
-                <Text style={styles.infoValue}>
-                  {new Date(person.missing_date).toLocaleDateString('ko-KR', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
+            {/* 상태 배지 */}
+            <View style={styles.statusBadgeContainer}>
+              <View style={[styles.statusBadge, isResolved ? styles.resolvedBadge : styles.missingBadge]}>
+                <Text style={styles.statusBadgeText}>
+                  {isResolved ? '실종 해제' : '실종 중'}
                 </Text>
               </View>
+            </View>
 
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>상태</Text>
-                <View style={[styles.statusBadge, person.status === 'missing' ? styles.missingBadge : styles.resolvedBadge]}>
-                  <Text style={styles.statusBadgeText}>
-                    {person.status === 'missing' ? '🔴 실종 중' : '🟢 실종 해제'}
-                  </Text>
-                </View>
-              </View>
-
-              {person.status === 'resolved' && person.resolved_at && (
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>해제일</Text>
-                  <Text style={styles.infoValue}>
-                    {new Date(person.resolved_at).toLocaleDateString('ko-KR', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-                  </Text>
-                </View>
+            {/* 기본 정보 */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>기본 정보</Text>
+              {person.age && (
+                <InfoRow
+                  label="나이"
+                  value={`실종 당시 ${person.age}세${currentAge ? ` / 현재 약 ${currentAge}세` : ''}`}
+                />
               )}
+              {person.gender && <InfoRow label="성별" value={person.gender === 'M' ? '남성' : '여성'} />}
+            </View>
+
+            {/* 발생 정보 */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>발생 정보</Text>
+              <InfoRow
+                label="발생일시"
+                value={new Date(person.missing_date).toLocaleString('ko-KR', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              />
+              <InfoRow label="발생장소" value={person.location_address} />
             </View>
 
             {/* 신체특징 / 착의사항 */}
             {person.location_detail && (
-              <View style={styles.infoSection}>
-                <Text style={styles.sectionTitle}>👤 신체특징 / 착의사항</Text>
-                <Text style={styles.detailText}>{person.location_detail}</Text>
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>신체특징 / 착의사항</Text>
+                <Text style={styles.descriptionText}>{person.location_detail}</Text>
               </View>
             )}
 
-            {/* 실종 위치 */}
-            <View style={styles.infoSection}>
-              <Text style={styles.sectionTitle}>📍 실종 위치</Text>
-
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>주소</Text>
-                <Text style={styles.infoValue}>{person.location_address || 'N/A'}</Text>
+            {/* 실종 해제 정보 */}
+            {isResolved && person.resolved_at && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>실종 해제</Text>
+                <InfoRow
+                  label="해제일시"
+                  value={new Date(person.resolved_at).toLocaleString('ko-KR', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                />
               </View>
-            </View>
+            )}
           </ScrollView>
         </View>
       </View>
@@ -318,5 +333,22 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 13,
     fontWeight: '700',
+  },
+  statusBadgeContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  section: {
+    marginBottom: 24,
+  },
+  descriptionText: {
+    fontSize: 14,
+    color: '#333',
+    lineHeight: 22,
+    backgroundColor: '#F9F9F9',
+    padding: 12,
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#007AFF',
   },
 });

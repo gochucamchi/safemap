@@ -315,10 +315,11 @@ class DataSyncService:
         from app.services.photo_scraper_service import PhotoScraperService
 
         # 사진이 없는 실종자 조회 (status가 missing인 사람만)
+        # ID 순서로 정렬하여 순차적으로 처리
         persons_without_photos = db.query(MissingPerson).filter(
             MissingPerson.status == "missing",
             (MissingPerson.photo_urls.is_(None)) | (MissingPerson.photo_urls == "")
-        ).limit(max_persons).all()
+        ).order_by(MissingPerson.id).limit(max_persons).all()
 
         if not persons_without_photos:
             print("  ℹ️  사진이 필요한 실종자 없음\n")

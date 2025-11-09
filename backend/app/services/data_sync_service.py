@@ -439,15 +439,14 @@ class DataSyncService:
             {"geocoded": int}
         """
         import os
-        from app.services.naver_geocoding_service import NaverGeocodingService
+        from app.services.kakao_geocoding_service import KakaoGeocodingService
         from datetime import timedelta
 
-        # Naver API 키 확인
-        client_id = os.getenv("NAVER_CLIENT_ID")
-        client_secret = os.getenv("NAVER_CLIENT_SECRET")
+        # Kakao REST API 키 확인
+        kakao_rest_key = os.getenv("KAKAO_REST_API_KEY")
 
-        if not client_id or not client_secret:
-            print("  ⚠️  Naver API 키가 설정되지 않음. 지오코딩 건너뜀.\n")
+        if not kakao_rest_key:
+            print("  ⚠️  Kakao REST API 키가 설정되지 않음. 지오코딩 건너뜀.\n")
             return {"geocoded": 0}
 
         # 지오코딩이 안 된 실종자 조회
@@ -478,7 +477,7 @@ class DataSyncService:
             print(f"  📋 지오코딩 대상: {len(persons_without_geocoding)}명 (전체 처리)\n")
 
         # 지오코딩 서비스 초기화
-        geocoding_service = NaverGeocodingService(client_id, client_secret)
+        geocoding_service = KakaoGeocodingService(kakao_rest_key)
 
         # 지오코딩 처리
         geocoded_count = 0

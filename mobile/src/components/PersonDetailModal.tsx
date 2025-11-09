@@ -129,16 +129,17 @@ export default function PersonDetailModal({ visible, person, onClose }: PersonDe
                   </Text>
                 </View>
               )}
-
-              {person.external_id && (
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>실종자 번호</Text>
-                  <Text style={styles.infoValue}>{person.external_id}</Text>
-                </View>
-              )}
             </View>
 
-            {/* 위치 정보 */}
+            {/* 신체특징 / 착의사항 */}
+            {person.location_detail && (
+              <View style={styles.infoSection}>
+                <Text style={styles.sectionTitle}>👤 신체특징 / 착의사항</Text>
+                <Text style={styles.detailText}>{person.location_detail}</Text>
+              </View>
+            )}
+
+            {/* 실종 위치 */}
             <View style={styles.infoSection}>
               <Text style={styles.sectionTitle}>📍 실종 위치</Text>
 
@@ -146,22 +147,6 @@ export default function PersonDetailModal({ visible, person, onClose }: PersonDe
                 <Text style={styles.infoLabel}>주소</Text>
                 <Text style={styles.infoValue}>{person.location_address || 'N/A'}</Text>
               </View>
-
-              {person.location_detail && (
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>상세 정보</Text>
-                  <Text style={styles.infoValueMultiline}>{person.location_detail}</Text>
-                </View>
-              )}
-
-              {person.latitude && person.longitude && (
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>좌표</Text>
-                  <Text style={styles.infoValue}>
-                    {person.latitude.toFixed(6)}, {person.longitude.toFixed(6)}
-                  </Text>
-                </View>
-              )}
             </View>
           </ScrollView>
         </View>
@@ -278,6 +263,16 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#333',
     marginBottom: 12,
+  },
+  detailText: {
+    fontSize: 14,
+    color: '#333',
+    lineHeight: 22,
+    backgroundColor: '#F9F9F9',
+    padding: 12,
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#007AFF',
   },
   infoRow: {
     flexDirection: 'row',

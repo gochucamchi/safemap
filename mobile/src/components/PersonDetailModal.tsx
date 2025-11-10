@@ -116,28 +116,15 @@ export default function PersonDetailModal({ visible, person, onClose }: PersonDe
             {/* 기본 정보 */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>기본 정보</Text>
-              {person.name && <InfoRow label="성명" value={person.name} />}
+              {person.name && <InfoRow label="이름" value={person.name} />}
               {person.age && (
                 <InfoRow
                   label="나이"
-                  value={`실종 당시 ${person.age}세${person.age_now ? ` / 현재 ${person.age_now}세` : (currentAge ? ` / 현재 약 ${currentAge}세` : '')}`}
+                  value={`당시 ${person.age}세${person.age_now ? ` / 현재 약 ${person.age_now}세` : (currentAge ? ` / 현재 약 ${currentAge}세` : '')}`}
                 />
               )}
               {person.gender && <InfoRow label="성별" value={person.gender === 'M' ? '남성' : '여성'} />}
             </View>
-
-            {/* 신체 특징 */}
-            {(person.height || person.weight || person.body_type || person.face_shape || person.hair_style || person.hair_color) && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>신체 특징</Text>
-                {person.height && <InfoRow label="신장" value={`${person.height}cm`} />}
-                {person.weight && <InfoRow label="체중" value={`${person.weight}kg`} />}
-                {person.body_type && <InfoRow label="체격" value={person.body_type} />}
-                {person.face_shape && <InfoRow label="얼굴형" value={person.face_shape} />}
-                {person.hair_style && <InfoRow label="두발형태" value={person.hair_style} />}
-                {person.hair_color && <InfoRow label="두발색상" value={person.hair_color} />}
-              </View>
-            )}
 
             {/* 발생 정보 */}
             <View style={styles.section}>
@@ -154,6 +141,19 @@ export default function PersonDetailModal({ visible, person, onClose }: PersonDe
               />
               <InfoRow label="발생장소" value={person.location_address} />
             </View>
+
+            {/* 신체 특징 */}
+            {(person.height || person.weight || person.body_type || person.face_shape || person.hair_style || person.hair_color) && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>신체 특징</Text>
+                {person.height && <InfoRow label="키" value={`${person.height}cm`} />}
+                {person.weight && <InfoRow label="몸무게" value={`${person.weight}kg`} />}
+                {person.body_type && <InfoRow label="체격" value={person.body_type} />}
+                {person.face_shape && <InfoRow label="얼굴형" value={person.face_shape} />}
+                {person.hair_color && <InfoRow label="두발색상" value={person.hair_color} />}
+                {person.hair_style && <InfoRow label="두발형태" value={person.hair_style} />}
+              </View>
+            )}
 
             {/* 착의사항 */}
             {(person.clothing_description || person.location_detail) && (

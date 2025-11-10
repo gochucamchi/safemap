@@ -38,3 +38,17 @@ git commit -m "업데이트"
 git push origin main
 지오코딩 백엔드 실행
 python3 update_geocoding.py
+
+git pull claude/coding-assistance-011CUvfqcLfuZRadRn6yVmT6
+git pull origin claude/coding-assistance-011CUvfqcLfuZRadRn6yVmT6
+
+# 기본 (사진 + 지오코딩 모두)
+curl -X POST "http://localhost:8000/api/v1/sync/trigger"
+
+# 지오코딩만
+curl -X POST "http://localhost:8000/api/v1/sync/trigger?scrape_photos=false&geocode_addresses=true"
+
+# 인원수 조정
+curl -X POST "http://localhost:8000/api/v1/sync/trigger?max_geocode_persons=20
+
+git checkout origin/claude/check-github-project-011CUppXPdU9cT9A1o3Nv5nc

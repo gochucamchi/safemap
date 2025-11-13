@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
-from app.models.missing_person import Base
+from app.models.missing_person import Base, MissingPerson  # MissingPerson도 import 필요
 import os
 
 # 데이터베이스 URL

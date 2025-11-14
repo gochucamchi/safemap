@@ -1,0 +1,378 @@
+import React, { useState } from 'react';
+import {
+  Modal,
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Image,
+  Dimensions,
+} from 'react-native';
+import { API_BASE_URL } from '../services/api';
+
+interface PersonDetailModalProps {
+  visible: boolean;
+  person: any;
+  onClose: () => void;
+}
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const PHOTO_WIDTH = SCREEN_WIDTH - 32; // 양쪽 패딩 16씩
+const PHOTO_HEIGHT = 300;
+
+export default function PersonDetailModal({ visible, person, onClose }: PersonDetailModalProps) {
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+
+  if (!person) return null;
+
+  const photoUrls = person.photo_urls || [];
+  const hasPhotos = photoUrls.length > 0;
+  const isResolved = person.status === 'resolved';
+
+  // 현재 나이 계산
+  const getCurrentAge = () => {
+    if (!person.age || !person.missing_date) return null;
+    const missingYear = new Date(person.missing_date).getFullYear();
+    const currentYear = new Date().getFullYear();
+    const yearsPassed = currentYear - missingYear;
+    return person.age + yearsPassed;
+  };
+
+  const currentAge = getCurrentAge();
+
+  // InfoRow 컴포넌트
+  const InfoRow = ({ label, value }: { label: string; value: string }) => (
+    <View style={styles.infoRow}>
+      <Text style={styles.infoLabel}>{label}</Text>
+      <Text style={styles.infoValue}>{value}</Text>
+    </View>
+  );
+
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent={true}
+      onRequestClose={onClose}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          {/* 헤더 */}
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>실종자 상세정보</Text>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <Text style={styles.closeButtonText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+            {/* 사진 영역 */}
+            {hasPhotos ? (
+              <View style={styles.photoContainer}>
+                <Image
+                  source={{ uri: `${API_BASE_URL}${photoUrls[currentPhotoIndex]}` }}
+                  style={styles.photo}
+                  resizeMode="contain"
+                />
+                {photoUrls.length > 1 && (
+                  <View style={styles.photoNavigation}>
+                    <TouchableOpacity
+                      style={[styles.navButton, currentPhotoIndex === 0 && styles.navButtonDisabled]}
+                      onPress={() => setCurrentPhotoIndex(Math.max(0, currentPhotoIndex - 1))}
+                      disabled={currentPhotoIndex === 0}
+                    >
+                      <Text style={styles.navButtonText}>‹</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.photoCounter}>
+                      {currentPhotoIndex + 1} / {photoUrls.length}
+                    </Text>
+                    <TouchableOpacity
+                      style={[styles.navButton, currentPhotoIndex === photoUrls.length - 1 && styles.navButtonDisabled]}
+                      onPress={() => setCurrentPhotoIndex(Math.min(photoUrls.length - 1, currentPhotoIndex + 1))}
+                      disabled={currentPhotoIndex === photoUrls.length - 1}
+                    >
+                      <Text style={styles.navButtonText}>›</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            ) : (
+              <View style={styles.noPhotoContainer}>
+                <Text style={styles.noPhotoText}>📷</Text>
+                <Text style={styles.noPhotoSubtext}>등록된 사진이 없습니다</Text>
+              </View>
+            )}
+
+            {/* 상태 배지 */}
+            <View style={styles.statusBadgeContainer}>
+              <View style={[styles.statusBadge, isResolved ? styles.resolvedBadge : styles.missingBadge]}>
+                <Text style={styles.statusBadgeText}>
+                  {isResolved ? '실종 해제' : '실종 중'}
+                </Text>
+              </View>
+            </View>
+
+            {/* 기본 정보 */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>기본 정보</Text>
+              {person.name && <InfoRow label="이름" value={person.name} />}
+              {person.age && (
+                <InfoRow
+                  label="나이"
+                  value={`당시 ${person.age}세${person.age_now ? ` / 현재 약 ${person.age_now}세` : (currentAge ? ` / 현재 약 ${currentAge}세` : '')}`}
+                />
+              )}
+              {person.gender && <InfoRow label="성별" value={person.gender === 'M' ? '남성' : '여성'} />}
+            </View>
+
+            {/* 발생 정보 */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>발생 정보</Text>
+              <InfoRow
+                label="발생일시"
+                value={new Date(person.missing_date).toLocaleString('ko-KR', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              />
+              <InfoRow label="발생장소" value={person.location_address} />
+            </View>
+
+            {/* 신체 특징 */}
+            {(person.height || person.weight || person.body_type || person.face_shape || person.hair_style || person.hair_color) && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>신체 특징</Text>
+                {person.height && <InfoRow label="키" value={`${person.height}cm`} />}
+                {person.weight && <InfoRow label="몸무게" value={`${person.weight}kg`} />}
+                {person.body_type && <InfoRow label="체격" value={person.body_type} />}
+                {person.face_shape && <InfoRow label="얼굴형" value={person.face_shape} />}
+                {person.hair_color && <InfoRow label="두발색상" value={person.hair_color} />}
+                {person.hair_style && <InfoRow label="두발형태" value={person.hair_style} />}
+              </View>
+            )}
+
+            {/* 착의사항 */}
+            {(person.clothing_description || person.location_detail) && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>착의사항</Text>
+                <Text style={styles.descriptionText}>
+                  {person.clothing_description || person.location_detail}
+                </Text>
+              </View>
+            )}
+
+            {/* 기타 특징 */}
+            {person.special_features && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>기타 특이사항</Text>
+                <Text style={styles.descriptionText}>{person.special_features}</Text>
+              </View>
+            )}
+
+            {/* 실종 해제 정보 */}
+            {isResolved && person.resolved_at && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>실종 해제</Text>
+                <InfoRow
+                  label="해제일시"
+                  value={new Date(person.resolved_at).toLocaleString('ko-KR', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                />
+              </View>
+            )}
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '90%',
+    paddingBottom: 20,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5EA',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#333',
+  },
+  closeButton: {
+    padding: 4,
+  },
+  closeButtonText: {
+    fontSize: 24,
+    color: '#666',
+    fontWeight: '300',
+  },
+  scrollView: {
+    paddingHorizontal: 16,
+  },
+
+  // 사진
+  photoContainer: {
+    marginTop: 16,
+    marginBottom: 20,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  photo: {
+    width: PHOTO_WIDTH,
+    height: PHOTO_HEIGHT,
+    backgroundColor: '#E5E5EA',
+  },
+  photoNavigation: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#fff',
+  },
+  navButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#007AFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  navButtonDisabled: {
+    backgroundColor: '#E5E5EA',
+  },
+  navButtonText: {
+    fontSize: 24,
+    color: '#fff',
+    fontWeight: '600',
+  },
+  photoCounter: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '600',
+  },
+  noPhotoContainer: {
+    height: PHOTO_HEIGHT,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    marginTop: 16,
+    marginBottom: 20,
+  },
+  noPhotoText: {
+    fontSize: 48,
+    marginBottom: 8,
+  },
+  noPhotoSubtext: {
+    fontSize: 14,
+    color: '#999',
+  },
+
+  // 정보 섹션
+  infoSection: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#333',
+    marginBottom: 12,
+  },
+  detailText: {
+    fontSize: 14,
+    color: '#333',
+    lineHeight: 22,
+    backgroundColor: '#F9F9F9',
+    padding: 12,
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#007AFF',
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F5',
+  },
+  infoLabel: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500',
+    flex: 1,
+  },
+  infoValue: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '600',
+    flex: 2,
+    textAlign: 'right',
+  },
+  infoValueMultiline: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '600',
+    flex: 2,
+    textAlign: 'right',
+    lineHeight: 20,
+  },
+  statusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  missingBadge: {
+    backgroundColor: '#FF3B30',
+  },
+  resolvedBadge: {
+    backgroundColor: '#34C759',
+  },
+  statusBadgeText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  statusBadgeContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  section: {
+    marginBottom: 24,
+  },
+  descriptionText: {
+    fontSize: 14,
+    color: '#333',
+    lineHeight: 22,
+    backgroundColor: '#F9F9F9',
+    padding: 12,
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#007AFF',
+  },
+});

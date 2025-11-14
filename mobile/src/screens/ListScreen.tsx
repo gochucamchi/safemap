@@ -11,8 +11,12 @@ import {
 import { api } from '../services/api';
 import DateFilter from '../components/DateFilter';
 import AdvancedFilterModal from '../components/AdvancedFilterModal';
+<<<<<<< HEAD
 import DetailModal from '../components/DetailModal';
 import { useAuth } from '../contexts/AuthContext';
+=======
+import PersonDetailModal from '../components/PersonDetailModal';
+>>>>>>> d1176d62440f338400f576518b53ff4a493b3716
 
 export default function ListScreen() {
   const { isAuthenticated } = useAuth();
@@ -115,11 +119,24 @@ export default function ListScreen() {
     loadData(selectedDays, activeTab, advancedFilters);
   };
 
+  // 사람 상세 정보 보기 핸들러
+  const handlePersonPress = (person: any) => {
+    setSelectedPerson(person);
+    setShowDetailModal(true);
+  };
+
+  // 상세 모달 닫기 핸들러
+  const handleCloseDetailModal = () => {
+    setShowDetailModal(false);
+    setSelectedPerson(null);
+  };
+
   // 리스트 아이템 렌더링
   const renderItem = ({ item }) => {
     const isMissing = item.status === 'missing';
 
     return (
+<<<<<<< HEAD
       <TouchableOpacity
         style={styles.card}
         onPress={() => {
@@ -127,6 +144,9 @@ export default function ListScreen() {
           setShowDetailModal(true);
         }}
       >
+=======
+      <TouchableOpacity style={styles.card} onPress={() => handlePersonPress(item)}>
+>>>>>>> d1176d62440f338400f576518b53ff4a493b3716
         <View style={styles.cardHeader}>
           <Text style={styles.date}>
             {new Date(item.missing_date).toLocaleDateString('ko-KR', {
@@ -276,6 +296,7 @@ export default function ListScreen() {
       />
 
       {/* 상세 정보 모달 */}
+<<<<<<< HEAD
       <DetailModal
         visible={showDetailModal}
         onClose={() => {
@@ -284,6 +305,12 @@ export default function ListScreen() {
         }}
         person={selectedPerson}
         isAuthenticated={isAuthenticated}
+=======
+      <PersonDetailModal
+        visible={showDetailModal}
+        person={selectedPerson}
+        onClose={handleCloseDetailModal}
+>>>>>>> d1176d62440f338400f576518b53ff4a493b3716
       />
     </View>
   );

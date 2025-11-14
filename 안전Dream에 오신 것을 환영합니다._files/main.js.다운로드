@@ -1,0 +1,164 @@
+(function($) {
+	"use strict"
+
+	///////////////////////////
+	// Preloader
+	$(window).on('load', function() {
+		$("#preloader").delay(600).fadeOut();
+	});
+
+	///////////////////////////
+	// Scrollspy
+	$('body').scrollspy({
+		target: '#nav',
+		offset: $(window).height() / 2
+	});
+
+	///////////////////////////
+	// Smooth scroll
+	$("#nav .main-nav a[href^='#']").on('click', function(e) {
+	 	e.preventDefault();
+	 	var hash = this.hash;
+	 	$('html, body').animate({
+	 		scrollTop: $(this.hash).offset().top
+	 	}, 600);
+	});
+
+	$('#back-to-top').on('click', function(){
+		$('body,html').animate({
+			scrollTop: 0
+		}, 600);
+	});
+
+	///////////////////////////
+	// Btn nav collapse
+	$('#nav .nav-collapse').on('click', function() {
+		$('#nav').toggleClass('open');
+	});
+
+	///////////////////////////
+	// Mobile dropdown
+	$('.has-dropdown a').on('click', function() {
+		$(this).parent().toggleClass('open-drop');
+	});
+
+	$('.dmenu').on('click', function(){
+		var width = $(window).width();
+		if(width < 768){
+			$(this).children('.menu').toggle('slowly');
+		}
+	})
+	///////////////////////////
+	// On Scroll
+	$(window).on('scroll', function() {
+		var wScroll = $(this).scrollTop();
+
+		// Fixed nav
+		//wScroll > 1 ? $('#nav').addClass('fixed-nav') : $('#nav').removeClass('fixed-nav');
+
+		// Back To Top Appear
+		wScroll > 400 ? $('#back-to-top').fadeIn() : $('#back-to-top').fadeOut();
+	});
+
+	///////////////////////////
+	// magnificPopup
+	$('.full-menu').magnificPopup({
+		delegate: 'a',
+		type:'inline',
+  	midClick: true
+	});
+	$('.user-pw').magnificPopup({
+		delegate: 'a',
+		type:'inline',
+  	midClick: true
+	});
+	$('.pop-normal').magnificPopup({
+		delegate: 'a',
+		type:'inline',
+  	midClick: true
+	});
+	$('.safe-pop').magnificPopup({
+		delegate: 'a',
+		type:'inline',
+  	midClick: true
+	});
+
+	///////////////////////////
+	// Owl Carousel
+	$('#link-slider').owlCarousel({
+		loop:false,
+		margin: 10,
+		nav: true,
+		navText : ['<','>'],
+		dots : true,
+		autoplay : true,
+		responsive:{
+			0: {
+				items:2
+			},
+			576:{
+			 	items:3
+			}
+			,
+			992:{
+			 	items:4
+			}
+			,
+			1140:{
+			 	items:6
+			}
+		}
+	});
+
+	$('#missing-slider').owlCarousel({
+		loop:true,
+		margin:20,
+		dots : true,
+		nav: true,
+		navText : ['<','>'],
+		autoplay : true,
+		responsive:{
+			0: {
+				items:2
+			},
+			576: {
+				items:3
+			}
+		}
+	});
+
+	$('#missing-slider2').owlCarousel({
+		loop:true,
+		margin:20,
+		dots : true,
+		nav: true,
+		navText : ['<','>'],
+		autoplay : true,
+		responsive:{
+			0: {
+				items:2
+			},
+			576: {
+				items:3
+			}
+		}
+	});
+	
+	$('#missing-slider3').owlCarousel({
+		loop:true,
+		margin:20,
+		dots : true,
+		nav: true,
+		navText : ['<','>'],
+		autoplay : true,
+		responsive:{
+			0: {
+				items:2
+			},
+			576: {
+				items:3
+			}
+		}
+
+	});
+})(jQuery);

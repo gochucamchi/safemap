@@ -11,6 +11,7 @@ ENV/
 
 # Database
 *.db
+*.db.backup
 *.sqlite
 *.sqlite3
 
@@ -31,3 +32,4 @@ Thumbs.db
 
 # Logs
 *.log
+backend/downloaded_photos/

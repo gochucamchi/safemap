@@ -4,3 +4,5 @@ sqlalchemy==2.0.23
 httpx==0.25.1
 python-dotenv==1.0.0
 aiohttp
+alembic==1.13.1
+psycopg2-binary==2.9.9  # PostgreSQL 드라이버 (나중에 사용)

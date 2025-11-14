@@ -7,7 +7,10 @@ SafeMap API Server
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
+from pathlib import Path
 import os
 import asyncio
 
@@ -23,12 +26,17 @@ from app.api import missing_persons
 class AutoSyncManager:
     """자동 동기화 매니저 (30분마다)"""
 
+<<<<<<< HEAD
     def __init__(self, api_key: str, kakao_api_key: str, esntl_id: str = "10000855"):
+=======
+    def __init__(self, api_key: str, esntl_id: str = "10000855"):
+>>>>>>> d1176d62440f338400f576518b53ff4a493b3716
         self.api_key = api_key
         self.kakao_api_key = kakao_api_key
         self.esntl_id = esntl_id
         self.task = None
         self.is_running = False
+        self.is_first_run = True  # 첫 실행 플래그
     
     async def start(self):
         """자동 동기화 시작"""
@@ -68,7 +76,7 @@ class AutoSyncManager:
                 await asyncio.sleep(60)
     
     async def _run_sync(self):
-        """동기화 실행"""
+        """동기화 실행 (데이터 + 사진 + 지오코딩)"""
         try:
             from app.services.data_sync_service import DataSyncService
 
@@ -78,12 +86,50 @@ class AutoSyncManager:
                 esntl_id=self.esntl_id
             )
 
+<<<<<<< HEAD
             result = await service.sync_all_data(max_pages=50)
+=======
+            # 첫 실행: 모든 데이터 처리
+            if self.is_first_run:
+                print("\n🎯 첫 실행: 모든 사진 + 모든 지오코딩 처리")
+                result = await service.sync_all_data(
+                    max_pages=50,
+                    scrape_photos=True,
+                    max_photo_persons=None,  # 전체
+                    geocode_addresses=True,
+                    max_geocode_persons=None,  # 전체
+                    is_initial_sync=True
+                )
+                self.is_first_run = False
+            else:
+                # 정기 실행: 최근 추가된 것만 처리
+                print("\n🔄 정기 동기화: 새로운 데이터만 처리")
+                result = await service.sync_all_data(
+                    max_pages=50,
+                    scrape_photos=True,
+                    max_photo_persons=None,  # 최근 1시간 이내 전체
+                    geocode_addresses=True,
+                    max_geocode_persons=None,  # 최근 1시간 이내 전체
+                    is_initial_sync=False
+                )
+>>>>>>> d1176d62440f338400f576518b53ff4a493b3716
 
             if result["success"]:
                 stats = service.get_statistics()
                 print(f"\n📊 현재 DB: {stats['total_count']}건")
+<<<<<<< HEAD
                 print(f"   지오코딩: 성공 {stats['geocoding_success']}건 / 실패 {stats['geocoding_failed']}건")
+=======
+
+                # 사진 스크랩 결과 출력
+                if "photos_scraped" in result and result["photos_scraped"] > 0:
+                    print(f"📸 사진 스크랩: {result['photos_scraped']}명 성공, "
+                          f"{result['total_photos']}장 다운로드")
+
+                # 지오코딩 결과 출력
+                if "geocoded" in result and result["geocoded"] > 0:
+                    print(f"🗺️  지오코딩: {result['geocoded']}명 완료")
+>>>>>>> d1176d62440f338400f576518b53ff4a493b3716
 
         except Exception as e:
             print(f"❌ 동기화 실패: {e}")
@@ -178,6 +224,13 @@ app.include_router(
     tags=["missing-persons"]
 )
 
+# 사진 디렉토리 정적 파일 서빙
+PHOTOS_DIR = Path("downloaded_photos")
+PHOTOS_DIR.mkdir(exist_ok=True)
+
+# Static files 마운트 (사진 서빙용)
+app.mount("/photos", StaticFiles(directory=str(PHOTOS_DIR)), name="photos")
+
 
 # 루트 엔드포인트
 @app.get("/")
@@ -214,15 +267,30 @@ async def sync_status():
 
 # 수동 동기화 트리거
 @app.post("/api/v1/sync/trigger")
-async def trigger_sync():
-    """수동으로 동기화 실행"""
+async def trigger_sync(
+    scrape_photos: bool = True,
+    geocode_addresses: bool = True,
+    process_all: bool = False
+):
+    """
+    수동으로 동기화 실행 (데이터 + 사진 + 지오코딩)
+
+    Args:
+        scrape_photos: 사진 스크랩 여부
+        geocode_addresses: 지오코딩 여부
+        process_all: True면 전체 처리, False면 최근 추가만
+    """
     if not sync_manager:
         return {
             "success": False,
             "message": "Auto-sync is not configured"
         }
 
+<<<<<<< HEAD
     print("\n🔄 수동 동기화 요청")
+=======
+    print(f"\n🔄 수동 동기화 요청 (사진: {scrape_photos}, 지오코딩: {geocode_addresses}, 전체: {process_all})")
+>>>>>>> d1176d62440f338400f576518b53ff4a493b3716
 
     try:
         from app.services.data_sync_service import DataSyncService
@@ -233,7 +301,18 @@ async def trigger_sync():
             esntl_id=sync_manager.esntl_id
         )
 
+<<<<<<< HEAD
         result = await service.sync_all_data(max_pages=50)
+=======
+        result = await service.sync_all_data(
+            max_pages=50,
+            scrape_photos=scrape_photos,
+            max_photo_persons=None,
+            geocode_addresses=geocode_addresses,
+            max_geocode_persons=None,
+            is_initial_sync=process_all
+        )
+>>>>>>> d1176d62440f338400f576518b53ff4a493b3716
         return result
 
     except Exception as e:

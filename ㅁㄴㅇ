@@ -1,0 +1,103 @@
+여러 사진이 나오는걸 원하거든 일단 얘네들이 올린 사진을 다 저장해놓고 싶음
+
+<script type="text/javascript"> function fn_lcmMssImgChange(i) { $('img[name="tknImg"]').attr('src', '/home/lcm/blobImgListView.do?tknphotoFileIdx='+i); } function fn_lcmMssKdnpImgChange(i) { $('img[name="tknKdnpImg"]').attr('src', '/home/lcm/blobImgKdnpListView.do?tknphotoFileIdx='+i); } function fn_lcmProtectCreate(sn) { $('input[name="msspsnIdntfccd"]').val(sn); $('form[name="lcmMssVO"]').attr('action', '/home/protect/lcmProtectCreateForm.do').submit(); } function fn_lcmMssList() { $('form[name="lcmMssVO"]').attr('action', '/home/lcm/lcmMssList.do').submit(); } //인쇄 //function fn_Print() { // window.print(); //} //SNS 연동 function fn_Sns(gubun) { var rptDscd = '2'; var sn = '6046922'; var gnb = '014000000000'; var lnb = '014001000000'; var linkUrl = "http://www.safe182.go.kr/home/lcm/lcmMssGet.do?rptDscd="+rptDscd+"&msspsnIdntfccd="+sn+"&gnbMenuCd="+gnb+"&lnbMenuCd="+lnb; var title; var writngTrgetDscd = '010'; var adres = '서울특별시 양천구 목동동로 '; var adresArr = adres.split(' '); if (writngTrgetDscd == '010') title = '아동'; else if (writngTrgetDscd == '020') title = '가출'; else if (writngTrgetDscd == '060' || writngTrgetDscd == '061' || writngTrgetDscd == '062') title = '장애'; else if (writngTrgetDscd == '070') title = '치매'; var etcSpfeatr = '귀에 피어싱이 많음, 우울증이 있어 약을 먹는다고 하였고, 최근 약이 다 떨어졌다고 함.'; if (etcSpfeatr.length >= 35) { etcSpfeatr = etcSpfeatr.substring(0, 35)+'...'; } title = title + ' 박소율 (15세,여자)' + ' 2025. 11. 05. ' + adresArr[0] + ' ' + adresArr[1] + '(168cm, 58kg, '+etcSpfeatr+')' + ' #경찰청실종아동찾기센터'; var linkContent = " " + title; var url =""; linkContent = encodeURIComponent(linkContent); // 내용 var defaults = { version : '2.0.1', login : 'mcc182', apiKey : 'R_701aa2bbc7ff998ef6f91b96948ace71', history : '0', longUrl : linkUrl }; var ret = ''; var daurl = "http://api.bit.ly/v3/shorten?" +"&longUrl="+encodeURIComponent(defaults.longUrl) +"&login="+defaults.login +"&apiKey="+defaults.apiKey +"&format=json&callback=?"; var url = defaults.longUrl; jQuery.getJSON( daurl, function(data){ ret = data.data.url; if(gubun=="facebook"){ url = "http://www.facebook.com/sharer.php?u="+ret+"&t="+linkContent; }else if(gubun=="twitter"){ url = "http://twitter.com/home?status="+ret+linkContent; }else{ url = "http://me2day.net/posts/new?new_post[body]="+ret +linkContent; } window.open(url,'',''); } ); } </script> <form id="lcmMssVO" name="lcmMssVO" action="https://www.safe182.go.kr/home/lcm/lcmMssGet.do" method="post"> <input name="pageIndex" type="hidden" value="1"> <input type="hidden" name="rptDscd" value="2"> <input type="hidden" name="amalGnfdyn" value="N"> <input type="hidden" name="msspsnIdntfccd" value="0"> <!-- header부분 공통 hidden start --> <input type="hidden" name="gnbMenuCd" value="014000000000"> <input type="hidden" name="lnbMenuCd" value="014001000000"> <!-- header부분 공통 hidden end -->
+<!-- 검색부분 hidden -->
+
+
+
+
+<input type="hidden" name="sexdstnDscd" value="">
+<input type="hidden" name="nm" value="">
+<input type="hidden" name="detailDate1" value="">
+<input type="hidden" name="detailDate2" value="">
+<input type="hidden" name="age1" value="">
+<input type="hidden" name="age2" value="">
+<input type="hidden" name="etcSpfeatr" value="">
+<input type="hidden" name="occrAdres" value="">
+
+<!-- Contents Meta data and Option -->
+<div class="cnt-meta">
+	<p class="desc">찾고 있는 중인 실종아동등을 조회·검색하실 수 있습니다.</p>
+</div>
+
+<!-- Main Contents -->
+<div class="cnt-main">
+
+	<div class="board-top sns">
+<!-- <ul class="pull-right sns-follow"> <li><a href="javascript:fn_Sns('twitter');"><img class="img-responsive" src="/static/home/new_images/ic_twitter.png" alt="트위터"></a></li> <li><a href="javascript:fn_Sns('facebook');"><img class="img-responsive" src="/static/home/new_images/ic_facebook.png" alt="페이스북"></a></li> </ul> -->
+	</div>
+
+	<div class="board-read gallery">
+		
+		<fieldset class="clear_b">
+		<div class="row">
+			<div class="col-sm-4 gal-img">
+				<p class="main-thum">
+				
+					
+						<img name="tknImg" src="./안전Dream에 오신 것을 환영합니다._files/blobImgListView.do" alt="확대사진" height="240px" width="180px">
+					
+					
+				</p>
+				<ul class="sub-thum">
+					
+						
+							
+								<li class="col-sm-4">
+									<a href="javascript:fn_lcmMssImgChange(&#39;0&#39;);">
+									<img src="./안전Dream에 오신 것을 환영합니다._files/blobImgListView(1).do" class="middle" alt="사진1" width="58px" height="78px"></a>
+								</li>
+							
+							
+							
+						
+					
+						
+							
+								<li class="col-sm-4">
+									<a href="javascript:fn_lcmMssImgChange(&#39;1&#39;);">
+									<img src="./안전Dream에 오신 것을 환영합니다._files/blobImgListView(2).do" class="middle" alt="사진2" width="58px" height="78px"></a>
+								</li>
+							
+							
+							
+						
+					
+						
+							
+								<li class="col-sm-4">
+									<a href="javascript:fn_lcmMssImgChange(&#39;2&#39;);">
+									<img src="./안전Dream에 오신 것을 환영합니다._files/blobImgListView(3).do" class="middle" alt="사진3" width="58px" height="78px"></a>
+								</li>
+							
+							
+							
+						
+					
+						
+							
+							
+							
+								<li></li>
+							
+						
+					
+						
+							
+							
+							
+								<li></li>
+							
+						
+					
+						
+							
+							
+								<li class="col-sm-4"></li>
+							
+							
+						
+					
+				</ul>
+			</div>
+여기 코드에서 참고할 점 없냐 진짜로 ?

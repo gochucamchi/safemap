@@ -1,0 +1,548 @@
+var g_DSWDAPI = null;
+var g_DSDRMStarted = 0;
+
+var g_DSWD = null;
+
+// 초기화 기능
+$(function () {
+
+g_DSWD = new DSWD();
+
+$(document).contextmenu(function (e) {
+	//e.preventDefault();
+	return !g_DSWD.getBlockContextMenu();
+});
+
+$('body').bind('copy paste', function (e) {
+	//e.preventDefault();
+	return !g_DSWD.getBlockCopyPaste();
+});
+
+$(window).bind("beforeprint", function () {
+	var imgurl = 'http://www.wizione.com/images/main/ci.gif';
+	if (g_DSWD.getBlankOnPrint()) {
+		$("#DS_CSS_ONPRINT").text(
+
+			"BODY { " +
+			"display: none; " +
+			"visibility: hidden; " +
+			"}"
+		);
+	}
+	else {
+		$("#DS_CSS_ONPRINT").text("");
+		if (g_DSWD.getWatermarkOnPrint()) {
+			$("#DS_CSS_ONPRINT").text(
+				"* { " +
+				"	- webkit - print - color - adjust: exact; " +
+				"	} " +
+				"	body { " +
+				"		/* " +
+				"		filter: blur(8px); " +
+				"		-webkit-filter: blur(8px); " +
+				"		*/ " +
+				"	} " +
+				"	#DIVWM { " +
+				"		width: 100vw; " +
+				"		height: 100vh; " +
+				"		position: absolute; " +
+				"		visibility: visible; " +
+				"		display: block; " +
+				"	} " +
+				"	#DIVWM img { " +
+				"		position: absolute; " +
+				"		margin: auto; " +
+				"		top: 0; " +
+				"		left: 0; " +
+				"		right: 0; " +
+				"		bottom: 0; " +
+				"		width: 100%; " +
+				"		/* " +
+				"		left: 50%; " +
+				"		transform: translate(-50%); " +
+				"		transform: rotate(-46deg); " +
+				"		*/ " +
+				"	}"
+			);
+		}
+	}
+});
+
+	//checkBrowser();
+
+    // 현재 상테에 따라 기능 활성화 및 비활성화
+	
+	g_DSWD.setBlockContextMenu(true);
+	g_DSWD.setBlockCopyPaste(true);
+	g_DSWD.setBlankOnPrint(true);
+	g_DSWD.setWatermarkOnPrint(true);
+	
+	
+//	$("#m_chk_BlockContextMenu").change(function () {
+//		if ($("#m_chk_BlockContextMenu").is(":checked")) {
+//			g_DSWD.setBlockContextMenu(true);
+//		} else {
+//			g_DSWD.setBlockContextMenu(false);
+//		}
+//	});
+
+//	$("#m_chk_BlockCopyPaste").change(function () {
+//		if ($("#m_chk_BlockCopyPaste").is(":checked")) {
+//			g_DSWD.setBlockCopyPaste(true);
+//		} else {
+//			g_DSWD.setBlockCopyPaste(false);
+//		}
+//	});
+
+//	$("#m_chk_BlankOnPrint").change(function () {
+//		if ($("#m_chk_BlankOnPrint").is(":checked")) {
+//			g_DSWD.setBlankOnPrint(true);
+//		} else {
+//			g_DSWD.setBlankOnPrint(false);
+//		}
+//	});
+
+//	$("#m_chk_WatermarkOnPrint").change(function () {
+//		if ($("#m_chk_WatermarkOnPrint").is(":checked")) {
+//			g_DSWD.setWatermarkOnPrint(true);
+//		} else {
+//			g_DSWD.setWatermarkOnPrint(false);
+//		}
+//    });
+    
+    // 서비스 SDK연결
+    g_DSWDAPI = new DSWDAPI();
+
+    // 서비스 상태 확인
+	doCheckService();
+
+});
+
+
+function DSWD() {
+	// 초기 설정
+	this.m_bBlockContextMenu = true;
+	this.m_bBlockCopyPaste = true;
+	this.m_bDoBlankOnPrint = true;
+	this.m_bDoWatermarkOnPrint = true;
+}
+
+// 인쇄시 워터마크 출력
+DSWD.prototype.setWatermarkOnPrint = function (dovalue) {
+
+	this.m_bDoWatermarkOnPrint = dovalue;
+}
+
+DSWD.prototype.getWatermarkOnPrint = function () {
+	return this.m_bDoWatermarkOnPrint;
+}
+
+// 오른쪽 메뉴 허용/막기
+DSWD.prototype.setBlockContextMenu = function (doblock) { 
+	this.m_bBlockContextMenu = doblock;
+}
+
+DSWD.prototype.getBlockContextMenu = function () { 
+	return this.m_bBlockContextMenu;
+}
+
+// 복사/붙혀넣기 허용/막기
+DSWD.prototype.setBlockCopyPaste = function (doblock) { 
+	this.m_bBlockCopyPaste = doblock;
+}
+
+DSWD.prototype.getBlockCopyPaste = function () {
+	return this.m_bBlockCopyPaste;
+}
+
+// 인쇄시 빈 페이지 출력 허용/막기
+DSWD.prototype.setBlankOnPrint = function (doblankonprint) {
+	this.m_bDoBlankOnPrint = doblankonprint; 
+}
+
+DSWD.prototype.getBlankOnPrint = function () { 
+	return true;
+}
+
+DSWDAPI.EVTTYPE_COMM = function () {
+	return 0;
+}
+
+DSWDAPI.EVTTYPE_CHECKSERVICE = function () {
+	return 1;
+}
+
+DSWDAPI.EVTTYPE_GETVERSION = function () {
+	return 2;
+}
+
+DSWDAPI.EVTTYPE_DODRM = function () {
+	return 3;
+}
+
+DSWDAPI.EVTTYPE_DOADDBK = function () {
+	return 4;
+}
+
+DSWDAPI.EVTTYPE_DODELBK = function () {
+	return 5;
+}
+
+DSWDAPI.EVTTYPE_DOLISTBK = function () {
+	return 6;
+}
+
+function DSWDAPI() {
+	var _this = this;
+	this.m_xmlHttp = new XMLHttpRequest();
+	this.m_strBaseURL = "http://localhost:6064";
+	this.DEF_URICOMMAND_CHKSERVICE = "/DSDRM_API/CHKSERVICE";
+	this.DEF_URICOMMAND_GETVERSION = "/DSDRM_API/GETVERSION";
+	this.DEF_URICOMMAND_DRM = "/DSDRM_API/DRM";
+	this.DEF_URICOMMAND_ADDBK = "/DSDRM_API/ADDBK";
+	this.DEF_URICOMMAND_DELBK = "/DSDRM_API/DELBK";
+	this.DEF_URICOMMAND_LISTBK = "/DSDRM_API/LISTBK";
+
+	this.m_bDoAlert = false;
+	this.m_lTimeout = 10000;
+	this.m_cmdPrev = -1;
+
+	this.DS_FPAIO_EVTTYPE_COMM = 0;
+	this.DS_FPAIO_EVTTYPE_FINDEVICE = 1;
+	this.DS_FPAIO_EVTTYPE_GETFP = 2;
+	this.DS_FPAIO_ERR_CONNECT = 10;
+
+	this.setTimeout = function (ltimeout) {
+		this.m_lTimeout = ltimeout;
+	}
+
+	this.setDoAlert = function (bAlert) {
+		this.m_bDoAlert = bAlert;
+	}
+
+	this.getAPIUrl = function (apiname) {
+		return this.m_strBaseURL.concat(apiname);
+	}
+
+	this.DSDRM_CheckService = function () {
+		this.m_cmdPrev = 100;
+		var strURL = this.getAPIUrl(this.DEF_URICOMMAND_CHKSERVICE);
+		this.m_xmlHttp.open("GET", strURL, true);
+		this.m_xmlHttp.timeout = this.m_lTimeout;
+		//this.m_xmlHttp.send();
+	}
+
+	this.DSDRM_GetVersion = function () {
+		this.m_cmdPrev = 101;
+		var strURL = this.getAPIUrl(this.DEF_URICOMMAND_GETVERSION);
+		this.m_xmlHttp.open("GET", strURL, true);
+		this.m_xmlHttp.timeout = this.m_lTimeout;
+		this.m_xmlHttp.send();
+	}
+
+	this.DSDRM_DoDRM = function (nstart) {
+		this.m_cmdPrev = 102;
+		var strURL = this.getAPIUrl(this.DEF_URICOMMAND_DRM);
+
+		var jsonData = {};
+		jsonData["enable"] = nstart;
+
+		this.m_xmlHttp.open("POST", strURL, true);
+		this.m_xmlHttp.timeout = this.m_lTimeout;
+		this.m_xmlHttp.send(JSON.stringify(jsonData));
+	}
+
+	this.DSDRM_DoAddBK = function (nctrl, nalt, nkc) {
+		this.m_cmdPrev = 103;
+		var strURL = this.getAPIUrl(this.DEF_URICOMMAND_ADDBK);
+
+		var jsonData = {};
+		jsonData["c"] = nctrl;
+		jsonData["a"] = nalt;
+		jsonData["k"] = nkc;
+
+		this.m_xmlHttp.open("POST", strURL, true);
+		this.m_xmlHttp.timeout = this.m_lTimeout;
+		this.m_xmlHttp.send(JSON.stringify(jsonData));
+	}
+
+	this.DSDRM_DoDelBK = function (nctrl, nalt, nkc) {
+		this.m_cmdPrev = 104;
+		var strURL = this.getAPIUrl(this.DEF_URICOMMAND_DELBK);
+
+		var jsonData = {};
+		jsonData["c"] = nctrl;
+		jsonData["a"] = nalt;
+		jsonData["k"] = nkc;
+
+		this.m_xmlHttp.open("POST", strURL, true);
+		this.m_xmlHttp.timeout = this.m_lTimeout;
+		this.m_xmlHttp.send(JSON.stringify(jsonData));
+	}
+
+	this.DSDRM_DoListBK = function () {
+		this.m_cmdPrev = 105;
+		var strURL = this.getAPIUrl(this.DEF_URICOMMAND_LISTBK);
+
+		this.m_xmlHttp.open("GET", strURL, true);
+		this.m_xmlHttp.timeout = this.m_lTimeout;
+		this.m_xmlHttp.send();
+	}
+
+	this.DSDRM_OnProcEvent = function (evt) {
+		DSDRM_OnEvent(evt);
+	}
+
+	this.DSDRM_DoProcResult = function (jsonResult) {
+		var strMsg = "";
+		var procResult = jsonResult["result"];
+
+		if (procResult == 1) {
+			var result = jsonResult["sdk_result"];
+			if (_this.m_cmdPrev == 100) {
+				if (result == 1)
+					strMsg = "정상적으로 동작중입니다.";
+				else
+					strMsg = "동작중이지 않습니다.";
+				_this.DSDRM_OnProcEvent({ et: DSWDAPI.EVTTYPE_CHECKSERVICE(), detail: strMsg, response: jsonResult });
+			}
+			else if (_this.m_cmdPrev == 101) {
+				if (result == 1)
+					strMsg = "정상적으로 동작중입니다.";
+				else
+					strMsg = "동작중이지 않습니다.";
+				_this.DSDRM_OnProcEvent({ et: DSWDAPI.EVTTYPE_GETVERSION(), detail: strMsg, response: jsonResult });
+			}
+			else if (_this.m_cmdPrev == 102) {
+				if (result == 1)
+					strMsg = "정상적으로 동작중입니다.";
+				else
+					strMsg = "동작중이지 않습니다.";
+				_this.DSDRM_OnProcEvent({ et: DSWDAPI.EVTTYPE_DODRM(), detail: strMsg, response: jsonResult });
+			}
+			else if (_this.m_cmdPrev == 103) {
+				if (result == 1)
+					strMsg = "추가하였습니다.";
+				else
+					strMsg = "추가오류 발생";
+				_this.DSDRM_OnProcEvent({ et: DSWDAPI.EVTTYPE_DOADDBK(), detail: strMsg, response: jsonResult });
+			}
+			else if (_this.m_cmdPrev == 104) {
+				if (result == 1)
+					strMsg = "삭제하였습니다.";
+				else
+					strMsg = "삭제오류 발생";
+				_this.DSDRM_OnProcEvent({ et: DSWDAPI.EVTTYPE_DODELBK(), detail: strMsg, response: jsonResult });
+			}
+			else if (_this.m_cmdPrev == 105) {
+				if (result == 1)
+					strMsg = "갱신 성공";
+				else
+					strMsg = "갱신오류 발생";
+				_this.DSDRM_OnProcEvent({ et: DSWDAPI.EVTTYPE_DOLISTBK(), detail: strMsg, response: jsonResult });
+			}
+		}
+	}
+
+	// Initialize
+	if ("withCredentials" in this.m_xmlHttp) {
+		// XHR for Chrome/Firefox/Opera/Safari.
+		this.m_xmlHttp.onreadystatechange = function () {
+			if (this.readyState == 4 && this.status == 200) {
+				var jsonResult = JSON.parse(this.responseText);
+				_this.DSDRM_DoProcResult(jsonResult);
+			}
+		}
+
+		this.m_xmlHttp.onerror = function (e) {
+			if (_this.m_bDoAlert == true) {
+				var strErr = 'DRM서비스가 실행중이 아닙니다.';
+				//alert(strErr);
+			}
+			_this.DSDRM_OnProcEvent({ et: DSWDAPI.EVTTYPE_COMM(), r: _this.DS_FPAIO_ERR_CONNECT });
+		}
+
+		this.m_xmlHttp.ontimeout = function (e) {
+			if (_this.m_bDoAlert == true) {
+				var strErr = 'DRM서비스가 실행중이 아닙니다.';
+				//alert(strErr);
+			}
+			_this.DSDRM_OnProcEvent({ et: DSWDAPI.EVTTYPE_COMM(), r: _this.DS_FPAIO_ERR_CONNECT });
+		}
+
+
+	} else if (typeof XDomainRequest != "undefined") {
+		// XDomainRequest for IE.
+		this.m_xmlHttp = new XDomainRequest();
+		this.m_xmlHttp.onload = function () {
+			var jsonResult = JSON.parse(this.responseText);
+			_this.DSDRM_DoProcResult(jsonResult);
+		};
+		this.m_xmlHttp.onerror = function () {
+
+			if (_this.m_bDoAlert == true) {
+				var strErr = 'DRM서비스가 실행중이 아닙니다.';
+				//alert(strErr);
+			}
+			_this.DSDRM_OnProcEvent({ et: DSWDAPI.EVTTYPE_COMM(), r: _this.DS_FPAIO_ERR_CONNECT });
+		};
+
+		this.m_xmlHttp.ontimeout = function (e) {
+			if (_this.m_bDoAlert == true) {
+				var strErr = 'DRM서비스가 실행중이 아닙니다.';
+				//alert(strErr);
+			}
+			_this.DSDRM_OnProcEvent({ et: DSWDAPI.EVTTYPE_COMM(), r: _this.DS_FPAIO_ERR_CONNECT });
+		}
+
+
+	} else {
+		// CORS not supported.
+		this.m_xmlHttp = null;
+	};
+
+	return this;
+}
+
+
+// 서비스에 대한 이벤트를 전달 받는 루틴
+function DSDRM_OnEvent(evt) {
+	var evtType = evt.et;
+	var eleInfo = document.getElementById("m_txtInfo");
+	var eleServerResponse = document.getElementById("m_txtResponse");
+
+	$("#m_btnCheckDRMService").prop("disabled", false);
+	$("#m_btnGetVersion").prop("disabled", false);
+	$("#m_btnStartStopService").prop("disabled", false);
+	$("#m_btnAddBK").prop("disabled", false);
+	$("#m_btnRefreshBK").prop("disabled", false);
+
+	if (evtType != DSWDAPI.EVTTYPE_COMM()) {
+		$("#m_btnStartStopService").val(evt.response.ds_drm_enable == 1 ? "DRM 중지" : "DRM 시작");
+		g_DSDRMStarted = evt.response.ds_drm_enable;
+	}
+   
+	switch (evtType) {
+		case DSWDAPI.EVTTYPE_COMM():
+			{
+				var strErr = 'DRM서비스가 실행중이 아닙니다.';
+				//alert(strErr);
+				//eleInfo.value = strErr;
+			}
+			break;
+		case DSWDAPI.EVTTYPE_CHECKSERVICE():
+			{
+				eleServerResponse.value = JSON.stringify(evt.response);
+				eleInfo.value = evt.detail;
+				doBKRefresh();
+			}
+			break;
+		case DSWDAPI.EVTTYPE_GETVERSION():
+			{
+				eleServerResponse.value = JSON.stringify(evt.response);
+				eleInfo.value = "ver. " + evt.response.ds_drm_ver;
+			}
+			break;
+		case DSWDAPI.EVTTYPE_DODRM():
+			{
+				eleServerResponse.value = JSON.stringify(evt.response);
+				eleInfo.value = (evt.response.ds_drm_enable == 1 ? "DRM이 구동중입니다." : "DRM이 중지 상태입니다.");
+			}
+			break;
+		case DSWDAPI.EVTTYPE_DOLISTBK():
+			{
+				eleServerResponse.value = JSON.stringify(evt.response);
+				eleInfo.value = evt.detail;
+
+				$("#m_lstbk").empty();
+
+				for (var i = 0; i < evt.response.ds_bklist.length; i++) {
+
+					var stritem = "";
+					stritem += "<li>";
+
+					stritem += "CONTROL: " + (evt.response.ds_bklist[i].c == 0 ? "NO" : "YES") + ", ";
+					stritem += "ALT: " + (evt.response.ds_bklist[i].a == 0 ? "NO" : "YES") + ", ";
+					stritem += "KEYCODE: 0x" + evt.response.ds_bklist[i].k.toString(16);
+
+					stritem += "&nbsp;&nbsp;<input type='button' onclick='javascript: doDelBK(" +
+						evt.response.ds_bklist[i].c + "," +
+						evt.response.ds_bklist[i].a + "," +
+						evt.response.ds_bklist[i].k + ");' value='삭제' />";
+
+					stritem += "</li>";
+
+					$("#m_lstbk").append(stritem);
+				}
+			}
+			break;
+		case DSWDAPI.EVTTYPE_DOADDBK():
+			{
+				eleServerResponse.value = JSON.stringify(evt.response);
+				eleInfo.value = evt.detail;
+				doBKRefresh();
+			}
+			break;
+		case DSWDAPI.EVTTYPE_DODELBK():
+			{
+				eleServerResponse.value = JSON.stringify(evt.response);
+				eleInfo.value = evt.detail;
+				doBKRefresh();
+			}
+			break;
+	}
+}
+
+// 전역 서비스 확인
+function doCheckService() {
+	$("#m_btnCheckDRMService").prop("disabled", true);
+	g_DSWDAPI.DSDRM_CheckService();
+}
+
+// 버전 확인 기능
+function doCheckVersion() {
+	$("#m_btnGetVersion").prop("disabled", true);
+	g_DSWDAPI.DSDRM_GetVersion();
+}
+
+// 전역 block를 사용할지 말지 toggle
+function doStartStopService() {
+	$("#m_btnStartStopService").prop("disabled", true);
+	g_DSWDAPI.DSDRM_DoDRM(g_DSDRMStarted == 1 ? 0 : 1);
+}
+
+// custom block 키 추가
+function doAddBK() {
+	var nbk = $("#m_kg_key").val();
+	var nctrl = $('#m_kg_ctrl').prop("checked") == true ? "1" : "0";
+	var nalt = $('#m_kg_alt').prop("checked") == true ? "1" : "0";
+
+	if (nbk.length == 0) {
+		alert("키 코드를 입력해 주세요");
+		return;
+	}
+
+	if (isNaN(parseInt('0x' + nbk)) == true) {
+		alert("키 코드를 정확히 입력해 주세요");
+		return;
+	}
+
+	nbk = parseInt('0x' + nbk).toString();
+	
+	$("#m_btnAddBK").prop("disabled", true);
+	g_DSWDAPI.DSDRM_DoAddBK(nctrl, nalt, nbk);
+}
+
+// custom block key 제거
+function doDelBK(c, a, k) {
+	g_DSWDAPI.DSDRM_DoDelBK(c, a, k);
+}
+
+// 현재 block하는 키 목록
+function doBKRefresh() {
+	$("#m_btnRefreshBK").prop("disabled", true);
+	g_DSWDAPI.DSDRM_DoListBK();
+}
+
+
+

@@ -32,8 +32,26 @@ class DataSyncService:
         self.api_client = SafeDreamAPI(api_key=api_key, esntl_id=esntl_id)
         self.geocoding_service = KakaoGeocodingService(api_key=kakao_api_key)
     
-    async def sync_all_data(self, max_pages: int = 50) -> Dict:
-        """모든 데이터 동기화 (최적화)"""
+    async def sync_all_data(
+        self,
+        max_pages: int = 50,
+        scrape_photos: bool = False,
+        max_photo_persons: int = None,
+        geocode_addresses: bool = False,
+        max_geocode_persons: int = None,
+        is_initial_sync: bool = False
+    ) -> Dict:
+        """
+        모든 데이터 동기화 (최적화)
+
+        Args:
+            max_pages: 최대 페이지 수
+            scrape_photos: 사진 스크랩 여부
+            max_photo_persons: 사진 스크랩할 최대 인원 (None이면 전체)
+            geocode_addresses: 주소 지오코딩 여부
+            max_geocode_persons: 지오코딩할 최대 인원 (None이면 전체)
+            is_initial_sync: 첫 실행 여부 (True면 전체 처리)
+        """
         print("\n" + "="*60)
         print("🚀 안전Dream API 데이터 동기화 시작")
         print("="*60 + "\n")
@@ -45,6 +63,9 @@ class DataSyncService:
             "updated": 0,
             "skipped": 0,
             "resolved": 0,  # 실종 해제
+            "photos_scraped": 0,  # 사진 스크랩한 인원
+            "total_photos": 0,  # 총 수집 사진
+            "geocoded": 0,  # 지오코딩 완료 인원
             "errors": [],
             "start_time": datetime.now(),
         }
@@ -200,10 +221,53 @@ class DataSyncService:
                     continue
             
             db.commit()
-            
+
+            # ✅ 사진 스크랩 (옵션)
+            if scrape_photos:
+                print("\n" + "="*60)
+                print("📸 실종자 사진 스크랩 시작")
+                print("="*60 + "\n")
+
+                try:
+                    photo_result = await self._scrape_photos_for_missing_persons(
+                        db,
+                        max_persons=max_photo_persons,
+                        is_initial_sync=is_initial_sync
+                    )
+                    result["photos_scraped"] = photo_result["persons_scraped"]
+                    result["total_photos"] = photo_result["total_photos"]
+
+                except Exception as e:
+                    error_msg = f"사진 스크랩 오류: {str(e)}"
+                    result["errors"].append(error_msg)
+                    print(f"❌ {error_msg}")
+                    import traceback
+                    traceback.print_exc()
+
+            # ✅ 주소 지오코딩 (옵션)
+            if geocode_addresses:
+                print("\n" + "="*60)
+                print("🗺️  주소 지오코딩 시작")
+                print("="*60 + "\n")
+
+                try:
+                    geocode_result = await self._geocode_missing_persons(
+                        db,
+                        max_persons=max_geocode_persons,
+                        is_initial_sync=is_initial_sync
+                    )
+                    result["geocoded"] = geocode_result["geocoded"]
+
+                except Exception as e:
+                    error_msg = f"지오코딩 오류: {str(e)}"
+                    result["errors"].append(error_msg)
+                    print(f"❌ {error_msg}")
+                    import traceback
+                    traceback.print_exc()
+
             result["end_time"] = datetime.now()
             result["duration"] = (result["end_time"] - result["start_time"]).total_seconds()
-            
+
             print("\n" + "="*60)
             print("✅ 데이터 동기화 완료!")
             print("="*60)
@@ -214,6 +278,8 @@ class DataSyncService:
    • 업데이트: {result['updated']}건
    • 실종 해제: {result['resolved']}건 🎉
    • 건너뜀: {result['skipped']}건
+   • 사진 스크랩: {result['photos_scraped']}명 (총 {result['total_photos']}장)
+   • 지오코딩: {result['geocoded']}명
    • 에러: {len(result['errors'])}건
    • 소요 시간: {result['duration']:.2f}초
             """)
@@ -285,6 +351,185 @@ class DataSyncService:
             db.add(new_person)
             return "added"
     
+    async def _scrape_photos_for_missing_persons(
+        self,
+        db: Session,
+        max_persons: int = None,
+        is_initial_sync: bool = False
+    ) -> Dict:
+        """
+        사진이 없는 실종자들의 사진 스크랩
+
+        Args:
+            db: 데이터베이스 세션
+            max_persons: 최대 스크랩 인원 (None이면 전체)
+            is_initial_sync: 첫 실행 여부 (True면 전체, False면 최근 추가만)
+
+        Returns:
+            {"persons_scraped": int, "total_photos": int}
+        """
+        from app.services.photo_scraper_service import PhotoScraperService
+        from datetime import timedelta
+
+        # 사진이 없는 실종자 조회
+        query = db.query(MissingPerson).filter(
+            MissingPerson.status == "missing",
+            (MissingPerson.photo_urls.is_(None)) | (MissingPerson.photo_urls == "")
+        )
+
+        # 정기 동기화일 경우 최근 1시간 이내 추가된 것만
+        if not is_initial_sync:
+            recent_time = datetime.now() - timedelta(hours=1)
+            query = query.filter(MissingPerson.created_at >= recent_time)
+            print(f"  ℹ️  최근 1시간 이내 추가된 사람만 확인\n")
+
+        all_persons_without_photos = query.all()
+
+        if not all_persons_without_photos:
+            print("  ℹ️  사진이 필요한 실종자 없음\n")
+            return {"persons_scraped": 0, "total_photos": 0}
+
+        # max_persons 제한 (None이면 전체)
+        if max_persons is not None:
+            # 전체 리스트에서 뒤에서부터 max_persons명만 선택
+            persons_without_photos = all_persons_without_photos[-max_persons:]
+            print(f"  📋 사진 스크랩 대상: {len(persons_without_photos)}명 (전체 {len(all_persons_without_photos)}명 중)\n")
+        else:
+            persons_without_photos = all_persons_without_photos
+            print(f"  📋 사진 스크랩 대상: {len(persons_without_photos)}명 (전체 처리)\n")
+
+        # 스크랩할 정보 준비
+        persons_to_scrape = [
+            {
+                "external_id": person.external_id,
+                "name": person.location_address[:20] if person.location_address else "Unknown"
+            }
+            for person in persons_without_photos
+        ]
+
+        # 사진 스크랩
+        async with PhotoScraperService(delay=3.0, max_retries=3) as scraper:
+            photo_results = await scraper.scrape_multiple_persons(persons_to_scrape)
+
+        # DB 업데이트
+        total_photos = 0
+        persons_scraped = 0
+
+        for person in persons_without_photos:
+            photo_urls = photo_results.get(person.external_id, [])
+            if photo_urls:
+                # 쉼표로 구분해서 저장
+                person.photo_urls = ",".join(photo_urls)
+                person.photo_count = len(photo_urls)
+                person.photos_downloaded = datetime.now()
+                person.updated_at = datetime.now()
+
+                total_photos += len(photo_urls)
+                persons_scraped += 1
+
+        db.commit()
+
+        print(f"\n  💾 DB 업데이트 완료: {persons_scraped}명, {total_photos}장\n")
+
+        return {
+            "persons_scraped": persons_scraped,
+            "total_photos": total_photos
+        }
+
+    async def _geocode_missing_persons(
+        self,
+        db: Session,
+        max_persons: int = None,
+        is_initial_sync: bool = False
+    ) -> Dict:
+        """
+        지오코딩이 안 된 실종자들의 주소 → 좌표 변환
+
+        Args:
+            db: 데이터베이스 세션
+            max_persons: 최대 지오코딩 인원 (None이면 전체)
+            is_initial_sync: 첫 실행 여부 (True면 전체, False면 최근 추가만)
+
+        Returns:
+            {"geocoded": int}
+        """
+        import os
+        from app.services.kakao_geocoding_service import KakaoGeocodingService
+        from datetime import timedelta
+
+        # Kakao REST API 키 확인
+        kakao_rest_key = os.getenv("KAKAO_REST_API_KEY")
+
+        if not kakao_rest_key:
+            print("  ⚠️  Kakao REST API 키가 설정되지 않음. 지오코딩 건너뜀.\n")
+            return {"geocoded": 0}
+
+        # 지오코딩이 안 된 실종자 조회
+        query = db.query(MissingPerson).filter(
+            MissingPerson.status == "missing",
+            (MissingPerson.latitude.is_(None)) | (MissingPerson.longitude.is_(None))
+        )
+
+        # 정기 동기화일 경우 최근 1시간 이내 추가된 것만
+        if not is_initial_sync:
+            recent_time = datetime.now() - timedelta(hours=1)
+            query = query.filter(MissingPerson.created_at >= recent_time)
+            print(f"  ℹ️  최근 1시간 이내 추가된 사람만 확인\n")
+
+        all_persons_without_geocoding = query.all()
+
+        if not all_persons_without_geocoding:
+            print("  ℹ️  지오코딩이 필요한 실종자 없음\n")
+            return {"geocoded": 0}
+
+        # max_persons 제한 (None이면 전체)
+        if max_persons is not None:
+            # 전체 리스트에서 뒤에서부터 max_persons명만 선택
+            persons_without_geocoding = all_persons_without_geocoding[-max_persons:]
+            print(f"  📋 지오코딩 대상: {len(persons_without_geocoding)}명 (전체 {len(all_persons_without_geocoding)}명 중)\n")
+        else:
+            persons_without_geocoding = all_persons_without_geocoding
+            print(f"  📋 지오코딩 대상: {len(persons_without_geocoding)}명 (전체 처리)\n")
+
+        # 지오코딩 서비스 초기화
+        geocoding_service = KakaoGeocodingService(kakao_rest_key)
+
+        # 지오코딩 처리
+        geocoded_count = 0
+
+        for idx, person in enumerate(persons_without_geocoding, 1):
+            if not person.location_address:
+                continue
+
+            try:
+                result = await geocoding_service.geocode_address(person.location_address)
+
+                if result:
+                    lat, lon = result
+                    person.latitude = lat
+                    person.longitude = lon
+                    person.updated_at = datetime.now()
+                    geocoded_count += 1
+
+                    if geocoded_count % 10 == 0:
+                        print(f"  🗺️  진행: {geocoded_count}/{len(persons_without_geocoding)} ({geocoded_count/len(persons_without_geocoding)*100:.1f}%)")
+
+                # API 부하 방지
+                if idx % 50 == 0:
+                    db.commit()
+
+            except Exception as e:
+                print(f"  ⚠️  지오코딩 실패: {person.location_address[:30]}, {str(e)}")
+                continue
+
+        db.commit()
+
+        print(f"\n  💾 DB 업데이트 완료: {geocoded_count}명 지오코딩 완료\n")
+
+        return {
+            "geocoded": geocoded_count
+        }
+
     def get_statistics(self) -> Dict:
         """현재 DB 통계 조회"""
         db = SessionLocal()
@@ -302,6 +547,7 @@ class DataSyncService:
                 MissingPerson.longitude.isnot(None)
             ).count()
 
+<<<<<<< HEAD
             geocoding_success = db.query(MissingPerson).filter(
                 MissingPerson.geocoding_status == "success"
             ).count()
@@ -312,6 +558,11 @@ class DataSyncService:
 
             geocoding_pending = db.query(MissingPerson).filter(
                 MissingPerson.geocoding_status == "pending"
+=======
+            # 사진 통계 추가
+            photos_count = db.query(MissingPerson).filter(
+                MissingPerson.photo_count > 0
+>>>>>>> d1176d62440f338400f576518b53ff4a493b3716
             ).count()
 
             return {
@@ -319,19 +570,40 @@ class DataSyncService:
                 "recent_count": recent_count,
                 "geocoded_count": geocoded_count,
                 "geocoded_percentage": round(geocoded_count / total_count * 100, 1) if total_count > 0 else 0,
+<<<<<<< HEAD
                 "geocoding_success": geocoding_success,
                 "geocoding_failed": geocoding_failed,
                 "geocoding_pending": geocoding_pending
+=======
+                "photos_count": photos_count,
+                "photos_percentage": round(photos_count / total_count * 100, 1) if total_count > 0 else 0
+>>>>>>> d1176d62440f338400f576518b53ff4a493b3716
             }
         finally:
             db.close()
 
 
+<<<<<<< HEAD
 async def run_sync(api_key: str, kakao_api_key: str, esntl_id: str = "10000855", max_pages: int = 50):
     """동기화 실행 함수"""
     service = DataSyncService(api_key=api_key, kakao_api_key=kakao_api_key, esntl_id=esntl_id)
     result = await service.sync_all_data(max_pages=max_pages)
     
+=======
+async def run_sync(api_key: str, esntl_id: str = "10000855", max_pages: int = 50, scrape_photos: bool = False):
+    """
+    동기화 실행 함수
+
+    Args:
+        api_key: 안전Dream API 키
+        esntl_id: 기관 ID
+        max_pages: 최대 페이지 수
+        scrape_photos: 사진 스크랩 여부
+    """
+    service = DataSyncService(api_key=api_key, esntl_id=esntl_id)
+    result = await service.sync_all_data(max_pages=max_pages, scrape_photos=scrape_photos)
+
+>>>>>>> d1176d62440f338400f576518b53ff4a493b3716
     stats = service.get_statistics()
     print("\n" + "="*60)
     print("📊 현재 데이터베이스 통계")
@@ -340,14 +612,18 @@ async def run_sync(api_key: str, kakao_api_key: str, esntl_id: str = "10000855",
    • 전체 실종자: {stats['total_count']}명
    • 최근 7일 추가: {stats['recent_count']}명
    • 위경도 변환 완료: {stats['geocoded_count']}명 ({stats['geocoded_percentage']}%)
+<<<<<<< HEAD
 
    📍 지오코딩 상태:
    • 성공: {stats['geocoding_success']}명
    • 실패 (위치 불명): {stats['geocoding_failed']}명
    • 대기 중: {stats['geocoding_pending']}명
+=======
+   • 사진 보유: {stats['photos_count']}명 ({stats['photos_percentage']}%)
+>>>>>>> d1176d62440f338400f576518b53ff4a493b3716
     """)
     print("="*60 + "\n")
-    
+
     return result
 
 

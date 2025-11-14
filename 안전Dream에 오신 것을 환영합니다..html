@@ -1,0 +1,1809 @@
+<!DOCTYPE html>
+<!-- saved from url=(0047)https://www.safe182.go.kr/home/lcm/lcmMssGet.do -->
+<html lang="ko"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>안전Dream에 오신 것을 환영합니다.</title>
+<link rel="stylesheet" type="text/css" href="./안전Dream에 오신 것을 환영합니다._files/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="./안전Dream에 오신 것을 환영합니다._files/owl.carousel.css">
+<link rel="stylesheet" type="text/css" href="./안전Dream에 오신 것을 환영합니다._files/owl.theme.default.css">
+<link rel="stylesheet" type="text/css" href="./안전Dream에 오신 것을 환영합니다._files/magnific-popup.css">
+<link rel="stylesheet" type="text/css" href="./안전Dream에 오신 것을 환영합니다._files/reset.css">
+<link rel="stylesheet" type="text/css" href="./안전Dream에 오신 것을 환영합니다._files/typo.css">
+<link rel="stylesheet" type="text/css" href="./안전Dream에 오신 것을 환영합니다._files/form.css">
+<link rel="stylesheet" type="text/css" href="./안전Dream에 오신 것을 환영합니다._files/metisMenu.css">
+<link rel="stylesheet" type="text/css" href="./안전Dream에 오신 것을 환영합니다._files/style.css">
+<link rel="stylesheet" type="text/css" href="./안전Dream에 오신 것을 환영합니다._files/responsive.css">
+<link type="text/css" rel="stylesheet" href="./안전Dream에 오신 것을 환영합니다._files/datepicker.css">
+<!--	키보드 보안 -->
+<script type="text/javascript" src="./안전Dream에 오신 것을 환영합니다._files/vKeypad.min.js.다운로드"></script>
+<script type="text/javascript" src="./안전Dream에 오신 것을 환영합니다._files/kjscrypto.min.js.다운로드"></script>
+<script type="text/javascript" src="./안전Dream에 오신 것을 환영합니다._files/kjscrypto_contrib.min.js.다운로드"></script>
+<script type="text/javascript" src="./안전Dream에 오신 것을 환영합니다._files/jquery-1.11.3.min.js.다운로드"></script>
+<!--	WEB DRM -->
+<!-- script type="text/javascript" src="/static/home/drm/js/jquery-1.7.1.js"></script-->
+<script type="text/javascript" src="./안전Dream에 오신 것을 환영합니다._files/chkbrowser.js.다운로드"></script>
+<script type="text/javascript" src="./안전Dream에 오신 것을 환영합니다._files/base64.js.다운로드"></script>
+<script type="text/javascript" src="./안전Dream에 오신 것을 환영합니다._files/webdrm.js.다운로드"></script>
+<script type="text/javascript">
+//GNB이동
+function fn_Gnb(url, gnbMenuCd, lnbMenuCd) {
+
+  var vfrm = document.frmHeader;
+
+  vfrm.gnbMenuCd.value = gnbMenuCd;
+  vfrm.lnbMenuCd.value = lnbMenuCd;
+
+  if(url == '') {
+    url = "error";
+  }
+
+  if(lnbMenuCd == '009005000000') { // 성범죄자명단 공개정보 조회는 새창으로 띄운다.
+    window.open(url, '', '');
+  } else {
+    vfrm.action = ""+url+"";
+    vfrm.submit();
+  }
+
+}
+
+//LNB이동
+function fn_Lnb(url, gnbMenuCd, lnbMenuCd) {
+
+  var vfrm = document.frmHeader;
+
+  vfrm.gnbMenuCd.value = gnbMenuCd;
+  vfrm.lnbMenuCd.value = lnbMenuCd;
+
+  if(url == '') {
+    url = "error";
+  }
+
+  if(lnbMenuCd == '009005000000') { // 성범죄자명단 공개정보 조회는 새창으로 띄운다.
+    window.open(url, '', '');
+  } else {
+    vfrm.action = ""+url+"";
+    vfrm.submit();
+  }
+}
+
+function fn_menuLang() {
+	var lang = jQuery("select[name='lang']").val();
+	var msg = "";
+	
+	switch(lang) {
+		case "KOR" :
+		msg = "선택한 설정을 유지하시겠습니까?";
+		break;
+
+		case "ENG" :
+		msg = "Remember my choice for next time";
+		break;
+	}
+
+	if(lang != "") {
+
+		var lfrm = document.frmLang;
+
+		if(confirm(msg)) {
+			setCookieDay("lang",lang,365);
+			jQuery("input[name='menuLanguage']").val(lang);
+			lfrm.action = "/index.do";
+			lfrm.submit();
+		}else{
+			setCookieDay("tempLang",lang,0);
+			jQuery("input[name='menuLanguage']").val(lang);
+			lfrm.action = "/index.do";
+			lfrm.submit();
+		}
+	}
+}
+
+function setCookieDay( name, value, expiredays ) {
+    var todayDate = new Date();
+	todayDate.setDate( todayDate.getDate() + expiredays );
+
+	if(expiredays == 0) {
+		//
+	    //var cookieValue = name + "=" + escape( value ) + "; path=/; domain=www.cetest.com;";
+		//로컬, 개발, 운영
+	    var cookieValue = name + "=" + escape( value ) + "; path=/; domain=www.safe182.go.kr;";
+	} else {
+		//
+	    //var cookieValue = name + "=" + escape( value ) + "; path=/; expires=" + todayDate.toGMTString() + "; domain=www.cetest.com;";
+		//로컬, 개발, 운영
+	    var cookieValue = name + "=" + escape( value ) + "; path=/; expires=" + todayDate.toGMTString() + "; domain=www.safe182.go.kr;";
+	}
+	document.cookie = cookieValue;
+}
+</script>
+
+<!--WEB-DRM S //jw-->
+<style>
+@media print {
+	* {
+		-webkit-print-color-adjust: exact;
+	}
+}
+
+html, body {
+	height: 100%
+}
+
+#DIVWM {
+	visibility: hidden;
+	display: none;
+}
+</style>
+
+<style id="DS_CSS_ONPRINT" type="text/css" media="print">
+* {
+	-webkit-print-color-adjust: exact;
+}
+
+body {
+	/*
+	filter: blur(8px);
+	-webkit-filter: blur(8px);
+	*/
+}
+
+#DIVWM {
+	width: 100vw;
+	height: 100vh;
+	position: absolute;
+	visibility: visible;
+	display: block;
+}
+
+	#DIVWM img {
+		position: absolute;
+		margin: auto;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		width: 100%;
+		/*
+		left: 50%;
+		transform: translate(-50%);
+		transform: rotate(-46deg);
+		*/
+	}
+</style>
+<!--WEB-DRM E-->
+
+</head>
+<body>
+
+	<!-- Preloader -->
+	<div id="preloader" style="display: none;">
+		<div class="preloader">
+			<span></span>
+			<span></span>
+			<span></span>
+			<span></span>
+		</div>
+	</div>
+	<!-- /Preloader -->
+
+<form name="frmHeader" method="post" action="https://www.safe182.go.kr/home/lcm/lcmMssGet.do">
+	<input type="hidden" id="gnbMenuCd" name="gnbMenuCd" value="014000000000">
+	<input type="hidden" id="lnbMenuCd" name="lnbMenuCd" value="014001000000">
+	<input type="hidden" id="lnbUpperMenuCd" name="lnbUpperMenuCd" value="014000000000">
+</form>
+
+<form name="frmLang" method="post" action="https://www.safe182.go.kr/home/lcm/lcmMssGet.do">
+	<input type="hidden" id="menuLanguage" name="menuLanguage">
+</form>
+
+<!-- Header -->
+
+
+	<header>
+
+
+<nav id="nav" class="navbar">
+<div class="container">
+	<div class="navbar-header">
+		<div class="navbar-brand">
+			<a href="https://www.safe182.go.kr/index.do"><img class="logo img-responsive" src="./안전Dream에 오신 것을 환영합니다._files/logo.png" alt="안전Dream"></a>
+		</div>
+
+		<!-- Collapse nav button -->
+		<div class="nav-collapse"><span></span></div>
+		<!-- /Collapse nav button --></div>
+
+		<div class="header-util">
+			<ul class="util-items">
+				<li><a href="https://www.safe182.go.kr/home/lcm/lcmMssGet.do#" class="linkStyle7" onclick="fn_Gnb(&#39;/cont/homeLogContents.do?contentsNm=sexual_chatbot&#39;, &#39;009000000000&#39;, &#39;009006000000&#39;);">성범죄 상담 챗봇</a></li>
+				<li><a href="https://www.safe182.go.kr/home/lcm/lcmMssGet.do#" class="linkStyle7" onclick="fn_Gnb(&#39;/home/dic/dicaryConfirm.do&#39;, &#39;013000000000&#39;, &#39;013004000000&#39;);">나의 신고확인</a></li>
+				
+						 
+							
+								<li>
+									<a href="javascript:fn_Gnb(&#39;/home/api/guideMain.do&#39;,&#39;017000000000&#39;,&#39;017007000000&#39;);" onclick="">
+										OPEN API
+									</a>
+								</li>
+							
+							
+						
+						
+				
+			</ul>
+	
+			<div class="header-sel roboto-b">
+				<select id="language" class="middle" style="width:105px;" name="lang" title="언어선택" onchange="fn_menuLang();">
+					<option value="">Language</option>
+					<option value="KOR" selected="selected">KR</option>
+					<option value="ENG">EN</option>
+				</select>
+			</div>
+		</div>
+
+<!--  Main navigation  -->
+		<ul class="main-nav nav navbar-nav">
+			
+			
+			
+			
+				
+					
+						
+						<li class="has-dropdown">
+							
+							
+							
+								
+								<a href="javascript:void(0);">
+								실종아동등 </a>
+							
+						  
+		
+						
+							
+							
+							<ul class="dropdown">
+						
+					
+					
+				
+			
+				
+					
+					
+						
+						
+							
+							<li><a href="javascript:fn_Gnb(&#39;/cont/homeLogContents.do?contentsNm=182_outline&#39;,&#39;008000000000&#39;,&#39;008004001000&#39;);" onclick="">실종아동등</a></li>
+						
+		
+						
+		
+						
+					
+				
+			
+				
+					
+					
+						
+						
+							
+							<li><a href="javascript:fn_Gnb(&#39;/cont/homeLogContents.do?contentsNm=182_abduct_main&#39;,&#39;008000000000&#39;,&#39;008006001000&#39;);" onclick="">유괴예방 수칙</a></li>
+						
+		
+						
+		
+						
+					
+				
+			
+				
+					
+					
+						
+						
+		
+						
+							
+							<li><a href="javascript:fn_Gnb(&#39;/cont/homeLogContents.do?contentsNm=182_keeper_outline&#39;,&#39;008000000000&#39;,&#39;008005000000&#39;);" onclick="">아동안전지킴이집</a></li>
+						
+		
+						
+							
+							
+							</ul>
+							</li>
+						
+					
+				
+			
+				
+					
+						
+						<li class="has-dropdown">
+							
+							
+								<a href="javascript:void(0);">
+								실종아동등 검색 </a>
+							
+							
+						  
+		
+						
+							
+							
+							<ul class="dropdown">
+						
+					
+					
+				
+			
+				
+					
+					
+						
+						
+		
+						
+							
+							<li><a href="javascript:fn_Gnb(&#39;/home/lcm/lcmMssList.do?rptDscd=2&#39;,&#39;014000000000&#39;,&#39;014001000000&#39;);" onclick="">찾고 있어요</a></li>
+						
+		
+						
+					
+				
+			
+				
+					
+					
+						
+						
+		
+						
+							
+							<li><a href="javascript:fn_Gnb(&#39;/home/lcm/lcmMssList.do?rptDscd=1&#39;,&#39;014000000000&#39;,&#39;014002000000&#39;);" onclick="">보호하고 있어요</a></li>
+						
+		
+						
+					
+				
+			
+				
+					
+					
+						
+						
+		
+						
+							
+							<li><a href="javascript:fn_Gnb(&#39;/home/lcm/lcmMssList.do?rptDscd=2&amp;amalGnfdyn=Y&#39;,&#39;014000000000&#39;,&#39;014003000000&#39;);" onclick="">실종경보발령</a></li>
+						
+		
+						
+					
+				
+			
+				
+					
+					
+						
+						
+		
+						
+							
+							<li><a href="javascript:fn_Gnb(&#39;/home/lcm/lcmMssList.do?rptDscd=2&amp;kdnpGnfdyn=Y&#39;,&#39;014000000000&#39;,&#39;014004000000&#39;);" onclick="">유괴경보발령</a></li>
+						
+		
+						
+							
+							
+							</ul>
+							</li>
+						
+					
+				
+			
+				
+					
+						
+						<li class="has-dropdown">
+							
+							
+							
+								
+								<a href="javascript:void(0);">
+								성범죄 </a>
+							
+						  
+		
+						
+							
+							
+							<ul class="dropdown">
+						
+					
+					
+				
+			
+				
+					
+					
+						
+						
+							
+							<li><a href="javascript:fn_Gnb(&#39;/cont/homeLogContents.do?contentsNm=sexual_vio_overview&#39;,&#39;009000000000&#39;,&#39;009002001000&#39;);" onclick="">성폭력 범죄</a></li>
+						
+		
+						
+		
+						
+					
+				
+			
+				
+					
+					
+						
+						
+							
+							<li><a href="javascript:fn_Gnb(&#39;/cont/homeLogContents.do?contentsNm=sexual_prost_overview&#39;,&#39;009000000000&#39;,&#39;009003001000&#39;);" onclick="">성매매 범죄</a></li>
+						
+		
+						
+		
+						
+					
+				
+			
+				
+					
+					
+						
+						
+		
+						
+							
+							<li><a href="javascript:fn_Gnb(&#39;http://www.sexoffender.go.kr/&#39;,&#39;009000000000&#39;,&#39;009005000000&#39;);" onclick="">성범죄자정보 조회</a></li>
+						
+		
+						
+					
+				
+			
+				
+					
+					
+						
+						
+		
+						
+							
+							<li><a href="javascript:fn_Gnb(&#39;/cont/homeLogContents.do?contentsNm=sexual_chatbot&#39;,&#39;009000000000&#39;,&#39;009006000000&#39;);" onclick="">성범죄 상담 챗봇</a></li>
+						
+		
+						
+							
+							
+							</ul>
+							</li>
+						
+					
+				
+			
+				
+					
+						
+						<li class="has-dropdown"> 
+							
+							<a href="javascript:void(0);">
+							학교폭력 </a>
+						 
+		
+						
+							
+							
+							<ul class="dropdown">
+						
+					
+					
+				
+			
+				
+					
+					
+						
+						
+							
+							<li><a href="javascript:fn_Gnb(&#39;/cont/homeLogContents.do?contentsNm=school_vio_overview&#39;,&#39;010000000000&#39;,&#39;010001001000&#39;);" onclick="">학교폭력</a></li>
+						
+		
+						
+		
+						
+					
+				
+			
+				
+					
+					
+						
+						
+		
+						
+							
+							<li><a href="javascript:fn_Gnb(&#39;/cont/homeLogContents.do?contentsNm=youth_pol_net&#39;,&#39;010000000000&#39;,&#39;010007000000&#39;);" onclick="">유스폴넷(청소년경찰학교)</a></li>
+						
+		
+						
+							
+							
+							</ul>
+							</li>
+						
+					
+				
+			
+				
+					
+						
+						<li class="has-dropdown">
+							
+							
+							
+								
+								<a href="javascript:void(0);">
+								가정폭력 · 학대 </a>
+							
+						  
+		
+						
+							
+							
+							<ul class="dropdown">
+						
+					
+					
+				
+			
+				
+					
+					
+						
+						
+							
+							<li><a href="javascript:fn_Gnb(&#39;/cont/homeLogContents.do?contentsNm=family_vio_overview&#39;,&#39;011000000000&#39;,&#39;011001001000&#39;);" onclick="">가정폭력</a></li>
+						
+		
+						
+		
+						
+					
+				
+			
+				
+					
+					
+						
+						
+							
+							<li><a href="javascript:fn_Gnb(&#39;/cont/homeLogContents.do?contentsNm=family_abuse_overview&#39;,&#39;011000000000&#39;,&#39;011002001000&#39;);" onclick="">아동학대</a></li>
+						
+		
+						
+		
+						
+							
+							
+							</ul>
+							</li>
+						
+					
+				
+			
+				
+					
+						
+						<li class="has-dropdown">
+							
+							
+							
+								
+								<a href="javascript:void(0);">
+								스토킹 </a>
+							
+						  
+		
+						
+							
+							
+							<ul class="dropdown">
+						
+					
+					
+				
+			
+				
+					
+					
+						
+						
+							
+							<li><a href="javascript:fn_Gnb(&#39;/cont/homeLogContents.do?contentsNm=stalking_vio_overview&#39;,&#39;035000000000&#39;,&#39;035001001000&#39;);" onclick="">스토킹</a></li>
+						
+		
+						
+		
+						
+							
+							
+							</ul>
+							</li>
+						
+					
+				
+			
+				
+					
+						
+						<li class="has-dropdown">
+							
+							
+								<a href="javascript:void(0);">
+								알림마당 </a>
+							
+							
+						  
+		
+						
+							
+							
+							<ul class="dropdown">
+						
+					
+					
+				
+			
+				
+					
+					
+						
+						
+		
+						
+							
+							<li><a href="javascript:fn_Gnb(&#39;/bom/selectBoardList.do?bbsId=BBSMSTR_000000000371&#39;,&#39;012000000000&#39;,&#39;012001000000&#39;);" onclick="">공지사항</a></li>
+						
+		
+						
+					
+				
+			
+				
+					
+					
+						
+						
+		
+						
+							
+							<li><a href="javascript:fn_Gnb(&#39;/bom/selectBoardList.do?bbsId=BBSMSTR_000000000301&#39;,&#39;012000000000&#39;,&#39;012003000000&#39;);" onclick="">FAQ</a></li>
+						
+		
+						
+					
+				
+			
+				
+					
+					
+						
+						
+		
+						
+							
+							<li><a href="javascript:fn_Gnb(&#39;/bom/selectBoardList.do?bbsId=BBSMSTR_000000000361&#39;,&#39;012000000000&#39;,&#39;012004000000&#39;);" onclick="">법률정보</a></li>
+						
+		
+						
+							
+							
+							</ul>
+							</li>
+						
+					
+				
+			
+				
+					
+						
+						<li class="has-dropdown"> 
+							
+							<a href="javascript:void(0);">
+							신고상담 </a>
+						 
+		
+						
+							
+							
+							<ul class="dropdown">
+						
+					
+					
+				
+			
+				
+					
+					
+						
+						
+		
+						
+							
+							<li><a href="javascript:fn_Gnb(&#39;/pot/rpt/getPotSexualToxEnv.do&#39;,&#39;013000000000&#39;,&#39;013002000000&#39;);" onclick="">성범죄, 가정폭력, 학대, 청소년유해환경</a></li>
+						
+		
+						
+					
+				
+			
+				
+					
+					
+						
+						
+		
+						
+							
+							<li><a href="javascript:fn_Gnb(&#39;/pot/selectRptList.do?rptTyGubun=09&#39;,&#39;013000000000&#39;,&#39;013007000000&#39;);" onclick="">학교폭력</a></li>
+						
+		
+						
+					
+				
+			
+				
+					
+					
+						
+						
+		
+						
+							
+							<li><a href="javascript:fn_Gnb(&#39;/home/dic/dicaryBrowesWrap.do&#39;,&#39;013000000000&#39;,&#39;013012000000&#39;);" onclick="">사전등록 신청</a></li>
+						
+		
+						
+					
+				
+			
+				
+					
+					
+						
+						
+							
+							<li><a href="javascript:fn_Gnb(&#39;/cont/homeLogContents.do?contentsNm=report_info_dicary&#39;,&#39;013000000000&#39;,&#39;013005005000&#39;);" onclick="">신고 · 처리 안내</a></li>
+						
+		
+						
+		
+						
+					
+				
+			
+				
+					
+					
+						
+						
+		
+						
+							
+							<li><a href="javascript:fn_Gnb(&#39;/home/dic/dicaryConfirm.do&#39;,&#39;013000000000&#39;,&#39;013004000000&#39;);" onclick="">나의 신고확인</a></li>
+						
+		
+						
+							
+							
+							</ul>
+							</li>
+						
+					
+				
+			
+
+
+			<li class="full-menu"><a href="https://www.safe182.go.kr/home/lcm/lcmMssGet.do#full-menu"><img src="./안전Dream에 오신 것을 환영합니다._files/ic_pullmenu.png" alt="전체메뉴 보기"></a></li>
+			</ul>
+<!-- /Main navigation -->
+</div>
+</nav>
+<!-- /Nav -->
+
+			
+				<!-- header wrapper -->
+				<div class="location bg-grey">
+				<div class="container"><!-- mobile 이전버튼 -->
+				<a href="javascript:history.back();"><button class="prev-btn"><img src="./안전Dream에 오신 것을 환영합니다._files/btn_prev.png" alt="이전메뉴"></button></a>
+			
+				<h2>찾고 있어요</h2>
+				<ul class="breadcrumb">
+					<li class="breadcrumb-item home"><a href="https://www.safe182.go.kr/index.do"><img src="./안전Dream에 오신 것을 환영합니다._files/home.png" alt="홈으로"></a></li>
+					<li class="breadcrumb-item">실종아동등 검색</li>
+					<li class="breadcrumb-item active">찾고 있어요</li>
+				</ul>
+				</div>
+				</div>
+				<!-- /header wrapper -->
+			
+
+
+			
+		</header>
+
+<!-- Left 메뉴 여부가 'N'이 아닐 경우에만 -->
+	<div class="section cnt-zone">
+	<div class="container">
+	<div class="row"><aside id="aside" class="col-sm-3">
+	<div class="cnt-left">
+	<h3 class="title">실종아동등 검색</h3>
+	<ul id="menu" class="metismenu">
+	
+	
+	
+	
+	  
+	    
+		    
+			
+				<li class="active">
+				<a href="javascript:fn_Lnb(&#39;/home/lcm/lcmMssList.do?rptDscd=2&#39;,&#39;014000000000&#39;,&#39;014001000000&#39;);">찾고 있어요</a></li>
+			
+			
+			
+			
+		
+	
+	  
+	    
+		    
+			
+				<li class="">
+				<a href="javascript:fn_Lnb(&#39;/home/lcm/lcmMssList.do?rptDscd=1&#39;,&#39;014000000000&#39;,&#39;014002000000&#39;);">보호하고 있어요</a></li>
+			
+			
+			
+			
+		
+	
+	  
+	    
+		    
+			
+				<li class="">
+				<a href="javascript:fn_Lnb(&#39;/home/lcm/lcmMssList.do?rptDscd=2&amp;amalGnfdyn=Y&#39;,&#39;014000000000&#39;,&#39;014003000000&#39;);">실종경보발령</a></li>
+			
+			
+			
+			
+		
+	
+	  
+	    
+		    
+			
+				<li class="">
+				<a href="javascript:fn_Lnb(&#39;/home/lcm/lcmMssList.do?rptDscd=2&amp;kdnpGnfdyn=Y&#39;,&#39;014000000000&#39;,&#39;014004000000&#39;);">유괴경보발령</a></li>
+			
+			
+			
+			
+		
+	
+	</ul>
+	
+	
+
+		
+
+	<div class="side-bnr bnr-182">
+		<p class="title">
+			<span>
+				<span class="main-color">실종아동찾기</span><br>대표전화
+			</span>
+			<span class="call">
+				<span class="call-num roboto-b">1</span>
+				<span class="call-num roboto-b">8</span>
+				<span class="call-num roboto-b">2</span>
+			</span>
+		</p>
+
+<script type="text/javascript">		
+function fn_LeftGoto(gnbMenuCd, lnbMenuCd, url) {
+	var vfrm = document.frmLeftGoto;
+	vfrm.gnbMenuCd.value = gnbMenuCd;
+	vfrm.lnbMenuCd.value = lnbMenuCd;
+	vfrm.action = url;
+	vfrm.submit();
+}
+</script>
+		<form name="frmLeftGoto" method="post">
+		<input type="hidden" name="gnbMenuCd" value="">
+		<input type="hidden" name="lnbMenuCd" value="">
+
+		<ul class="btn-list">
+			<li><a href="https://www.safe182.go.kr/home/lcm/lcmMssGet.do#" class="search" onclick="fn_LeftGoto(&#39;014000000000&#39;, &#39;014001000000&#39;, &#39;/home/lcm/lcmMssList.do?rptDscd=2&#39;);">실종아동등 검색</a></li>
+			<!-- <li><a href="#"  class="notify" onclick="fn_LeftGoto('013000000000', '013001001000', '/home/lcm/LcmMsspasnRpt1Create.do?rptDscd=2');">실종아동 신고</a></li> -->
+		</ul>
+	</form></div>
+</div>
+</aside>
+
+		<!-- /왼쪽 메뉴 영역 -->
+		<!-- /Aside -->
+		<main id="main" class="col-sm-9">
+			<div class="cnt-right">
+			<h4 class="cnt-title">찾고 있어요</h4>
+
+
+
+<script type="text/javascript">
+function fn_lcmMssImgChange(i) {
+	$('img[name="tknImg"]').attr('src', '/home/lcm/blobImgListView.do?tknphotoFileIdx='+i);
+}
+
+function fn_lcmMssKdnpImgChange(i) {
+	$('img[name="tknKdnpImg"]').attr('src', '/home/lcm/blobImgKdnpListView.do?tknphotoFileIdx='+i);
+}
+
+function fn_lcmProtectCreate(sn) {
+	$('input[name="msspsnIdntfccd"]').val(sn);
+	$('form[name="lcmMssVO"]').attr('action', '/home/protect/lcmProtectCreateForm.do').submit();
+}
+
+function fn_lcmMssList() {
+	$('form[name="lcmMssVO"]').attr('action', '/home/lcm/lcmMssList.do').submit();
+}
+
+//인쇄
+//function fn_Print() {
+//    window.print();
+//}
+
+//SNS 연동
+function fn_Sns(gubun) {
+	var rptDscd = '2';
+	var sn = '6045126';
+	var gnb = '014000000000';
+	var lnb = '014001000000';
+	var linkUrl = "http://www.safe182.go.kr/home/lcm/lcmMssGet.do?rptDscd="+rptDscd+"&msspsnIdntfccd="+sn+"&gnbMenuCd="+gnb+"&lnbMenuCd="+lnb;
+
+	var title;
+	var writngTrgetDscd = '010';
+	var adres = '경기도 양평군 단월면,한서로 ';
+	var adresArr = adres.split(' ');
+	if (writngTrgetDscd == '010')
+		title = '아동';
+	else if (writngTrgetDscd == '020')
+		title = '가출';
+	else if (writngTrgetDscd == '060' || writngTrgetDscd == '061' || writngTrgetDscd == '062')
+		title = '장애';
+	else if (writngTrgetDscd == '070')
+		title = '치매';
+
+	var etcSpfeatr = '단월 중학교 3학년 학생으로 키 160cm 55kg에 약간 퉁퉁한 형태로 특이점은 없음';
+	if (etcSpfeatr.length >= 35) {
+		etcSpfeatr = etcSpfeatr.substring(0, 35)+'...';
+	}
+	title = title + ' 박지연 (15세,여자)'
+			+ ' 2025. 10. 29. '
+			+ adresArr[0] + ' ' + adresArr[1] + '(160cm, 55kg, '+etcSpfeatr+')'
+			+ ' #경찰청실종아동찾기센터';
+	var linkContent = " " + title;
+	
+	var url ="";
+	linkContent = encodeURIComponent(linkContent); // 내용
+	var defaults = {
+		version : '2.0.1',
+		login : 'mcc182',
+		apiKey : 'R_701aa2bbc7ff998ef6f91b96948ace71',
+		history : '0',
+		longUrl : linkUrl
+	};
+	var ret = '';
+	var daurl = "http://api.bit.ly/v3/shorten?"
+		+"&longUrl="+encodeURIComponent(defaults.longUrl)
+		+"&login="+defaults.login
+		+"&apiKey="+defaults.apiKey
+		+"&format=json&callback=?";
+	var url = defaults.longUrl;
+	jQuery.getJSON(
+		daurl, function(data){
+			ret = data.data.url;
+			if(gubun=="facebook"){
+				url = "http://www.facebook.com/sharer.php?u="+ret+"&t="+linkContent; 
+			}else if(gubun=="twitter"){
+				url = "http://twitter.com/home?status="+ret+linkContent; 
+			}else{
+				url = "http://me2day.net/posts/new?new_post[body]="+ret +linkContent;
+			} 
+		window.open(url,'','');
+		}
+	);
+}
+	 
+</script>
+
+
+<form id="lcmMssVO" name="lcmMssVO" action="https://www.safe182.go.kr/home/lcm/lcmMssGet.do" method="post">
+	<input name="pageIndex" type="hidden" value="1">
+	<input type="hidden" name="rptDscd" value="2">
+	<input type="hidden" name="amalGnfdyn" value="N">
+	<input type="hidden" name="msspsnIdntfccd" value="0">
+	<!-- header부분 공통 hidden start -->
+	<input type="hidden" name="gnbMenuCd" value="014000000000">
+	<input type="hidden" name="lnbMenuCd" value="014001000000">
+	<!-- header부분 공통 hidden end -->
+
+	<!-- 검색부분 hidden -->
+	
+	
+	
+	
+	<input type="hidden" name="sexdstnDscd" value="">
+	<input type="hidden" name="nm" value="">
+	<input type="hidden" name="detailDate1" value="">
+	<input type="hidden" name="detailDate2" value="">
+	<input type="hidden" name="age1" value="">
+	<input type="hidden" name="age2" value="">
+	<input type="hidden" name="etcSpfeatr" value="">
+	<input type="hidden" name="occrAdres" value="">
+
+	<!-- Contents Meta data and Option -->
+	<div class="cnt-meta">
+		<p class="desc">찾고 있는 중인 실종아동등을 조회·검색하실 수 있습니다.</p>
+	</div>
+
+	<!-- Main Contents -->
+	<div class="cnt-main">
+
+		<div class="board-top sns">
+<!-- 		
+		<ul class="pull-right sns-follow">
+			<li><a href="javascript:fn_Sns('twitter');"><img
+				class="img-responsive" src="/static/home/new_images/ic_twitter.png"
+				alt="트위터"></a></li>
+			<li><a href="javascript:fn_Sns('facebook');"><img
+				class="img-responsive" src="/static/home/new_images/ic_facebook.png"
+				alt="페이스북"></a></li>
+		</ul>
+ -->		
+		</div>
+
+		<div class="board-read gallery">
+			
+			<fieldset class="clear_b">
+			<div class="row">
+				<div class="col-sm-4 gal-img">
+					<p class="main-thum">
+					
+						
+							<img name="tknImg" src="./안전Dream에 오신 것을 환영합니다._files/blobImgListView.do" alt="확대사진" height="240px" width="180px">
+						
+						
+					</p>
+					<ul class="sub-thum">
+						
+							
+								
+									<li class="col-sm-4">
+										<a href="javascript:fn_lcmMssImgChange(&#39;0&#39;);">
+										<img src="./안전Dream에 오신 것을 환영합니다._files/blobImgListView.do" class="middle" alt="사진1" width="58px" height="78px"></a>
+									</li>
+								
+								
+								
+							
+						
+							
+								
+									<li class="col-sm-4">
+										<a href="javascript:fn_lcmMssImgChange(&#39;1&#39;);">
+										<img src="./안전Dream에 오신 것을 환영합니다._files/blobImgListView(1).do" class="middle" alt="사진2" width="58px" height="78px"></a>
+									</li>
+								
+								
+								
+							
+						
+							
+								
+									<li class="col-sm-4">
+										<a href="javascript:fn_lcmMssImgChange(&#39;2&#39;);">
+										<img src="./안전Dream에 오신 것을 환영합니다._files/blobImgListView(2).do" class="middle" alt="사진3" width="58px" height="78px"></a>
+									</li>
+								
+								
+								
+							
+						
+							
+								
+									<li class="col-sm-4">
+										<a href="javascript:fn_lcmMssImgChange(&#39;3&#39;);">
+										<img src="./안전Dream에 오신 것을 환영합니다._files/blobImgListView(3).do" class="middle" alt="사진4" width="58px" height="78px"></a>
+									</li>
+								
+								
+								
+							
+						
+							
+								
+								
+								
+									<li></li>
+								
+							
+						
+							
+								
+								
+									<li class="col-sm-4"></li>
+								
+								
+							
+						
+					</ul>
+				</div>
+
+				<div class="col-sm-8 table-responsive">
+					<p class="head-title">
+					<span class="info type-01">
+						
+							아동
+							
+							
+							
+							
+							
+							
+						
+					</span>
+					<span class="name">박지연(15세) 여자</span></p>
+					<table class="table table-bordered table-01">
+						<caption>신상정보</caption>
+						<colgroup>
+							<col class="col-th-width">
+							<col>
+						</colgroup>
+						<tbody>
+							<tr>
+								<th scope="row">당시나이</th>
+								<td>
+									
+										15세
+										(현재나이 : 15세)
+									
+									
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">국적</th>
+								<td>
+									
+										내국인
+									
+									
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">발생일시</th>
+								<td>
+									
+										2025년
+										10월
+										29일
+									
+									
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">발생장소</th>
+								<td> 
+									
+										경기도 양평군 단월면,한서로 
+									
+									
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">키</th>
+								<td>
+									
+										160cm
+									
+									
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">몸무게</th>
+								<td>
+									
+										55kg
+									
+									
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">체격</th>
+								<td>
+									
+										보통
+									
+									
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">얼굴형</th>
+								<td>
+									
+										둥근형
+									
+									
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">두발색상</th>
+								<td>
+									
+										흑색
+									
+									
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">두발형태</th>
+								<td>
+									
+										긴머리(생머리)
+									
+									
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">착의의상</th>
+								<td>
+									
+									&nbsp;
+								</td>
+							</tr>
+							<tr>
+								<th scope="row">진행상태</th>
+								<td>
+									
+										<img src="./안전Dream에 오신 것을 환영합니다._files/ic_declare.gif" class="middle" alt="신고">
+									
+									
+									
+									
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+		</div>
+		<!--// gallery row-->
+		</fieldset>
+	
+	</div>
+	
+	<!-- 용의자 정보 -->
+	<div class="board-read gallery">
+		
+	</div>
+	
+	<div class="board-bottom">
+		<a href="https://www.safe182.go.kr/home/lcm/lcmMssList.do" onclick="fn_lcmMssList(); return false;" class="pull-right outline-btn">목록</a>
+		<!-- <a href="/home/lcm/lcmProtectCreate.do" onclick="fn_lcmProtectCreate('6045126'); return false;" class="pull-right main-btn">제보하기</a> -->
+	</div>
+</div>
+</form>
+
+
+
+
+
+
+
+<script language="javascript" type="text/javascript">
+// 페이지 이동
+function fn_Footer(gnbMenuCd, lnbMenuCd, url){
+	document.frmFooter.gnbMenuCd.value = gnbMenuCd;
+	document.frmFooter.lnbMenuCd.value = lnbMenuCd; 
+	
+	document.frmFooter.action = url;
+	document.frmFooter.submit();
+}
+
+// 컨텐츠페이지 이동
+function fn_FooterContents(gnbMenuCd, lnbMenuCd, contentsNm){
+	document.frmFooter.gnbMenuCd.value = gnbMenuCd;
+	document.frmFooter.lnbMenuCd.value = lnbMenuCd;
+	
+	document.frmFooter.action = "/cont/homeContents.do?contentsNm=" + contentsNm;
+	document.frmFooter.submit();
+}
+
+// Log컨텐츠페이지 이동
+function fn_FooterLogContents(gnbMenuCd, lnbMenuCd, contentsNm){
+	document.frmFooter.gnbMenuCd.value = gnbMenuCd;
+	document.frmFooter.lnbMenuCd.value = lnbMenuCd;
+	
+	document.frmFooter.action = "/cont/homeLogContents.do?contentsNm=" + contentsNm;
+	document.frmFooter.submit();
+}
+
+//	부속기관 바로가기 팝업띄우기
+function fn_affiliatePopup() {
+	var url = $('select[name="affiliate"]').val();
+	if (url != '') {
+		window.open(url,'');
+	} else {
+		alert('부속기관을 선택하세요.');
+		$('select[name="affiliate"]').focus();
+	}
+}
+</script>
+<form name="frmFooter" method="post" action="https://www.safe182.go.kr/home/lcm/lcmMssGet.do">
+<!-- header부분 공통 hidden start -->
+<input type="hidden" name="gnbMenuCd" value="">
+<input type="hidden" name="lnbMenuCd" value="">
+<!-- header부분 공통 hidden end -->
+</form>
+
+
+					</div>
+					<!-- /cnt-right -->
+				</main>
+				<!-- /Main -->
+			</div>
+			<!-- /Row -->
+		</div>
+		<!-- /Container -->
+	</div>
+	<!-- /contentsBox -->
+	
+	<!-- Footer -->
+	<footer id="footer" class="bg-dark">
+		<div class="footer-menu">
+			<div class="container">
+				<!-- Row -->
+				<div class="row">
+					<ul class="site-menu">
+						<!--<li class="mobile_hidden"><a href="javascript:fn_FooterLogContents('018000000000', '018002000000', 'intro_safeDream');" onclick="">안전Dream 소개</a></li>-->
+						<!--<li class="mobile_hidden"><a href="javascript:fn_FooterLogContents('018000000000', '018004000000', 'intro_portal182');" onclick="">실종아동찾기</a></li>-->
+						<!--<li class="mobile_hidden"><a href="javascript:fn_FooterLogContents('018000000000', '018005000000', 'intro_portal117');" onclick="">117폭력신고센터</a></li>-->
+						<li><a href="javascript:fn_FooterContents(&#39;018000000000&#39;, &#39;018009000000&#39;, &#39;intro_policy_vio&#39;);" onclick="" style="color:#9debfb;font-weight:700;">개인정보침해신고</a></li>
+						<li><a href="javascript:fn_FooterContents(&#39;018000000000&#39;, &#39;018009000000&#39;, &#39;intro_policy_protect&#39;);" onclick="" style="color:#9debfb;font-weight:700;">개인정보처리방침</a></li>
+						<li class="mobile_last"><a href="javascript:fn_FooterContents(&#39;018000000000&#39;, &#39;018009000000&#39;, &#39;intro_policy_copy&#39;);" onclick="">저작권보호정책</a></li>
+						<!--<li class="mobile_hidden"><a href="javascript:fn_FooterContents('018000000000', '018006000000', 'intro_visit');" onclick="">찾아오시는 길</a></li>-->
+					</ul>
+				</div>
+			</div>
+		</div>
+
+		<!-- Container -->
+		<div class="container">
+			<div class="row sm-padding">
+					<div class="col-lg-3 footer-logo">
+						<a href="https://www.safe182.go.kr/"><img src="./안전Dream에 오신 것을 환영합니다._files/logo_foot.png" alt="안전Dream 아동여성장애인 경찰지원센터" class="img-responsive center-block"></a>
+					</div>
+
+					<div class="col-lg-7 footer-info">
+						<p class="orange-text">홈페이지에 게시된 이메일주소가 자동수집되는 것을 거부하며, 이를 위반 시 처벌될 수 있음을 양지하여 주시기 바랍니다.</p>
+						<p>우)03043 서울특별시 종로구 효자로9길 27</p>
+						<p class="white-text">아동·여성·장애인 경찰지원센터 : <strong class="blue-text">국번없이</strong> <strong class="orange-text">182(유료), 117</strong></p>
+						<div class="org_link">
+								<div class="org_select">
+									<label for="link-items">부속기관 선택</label>
+									<select id="familySite" name="affiliate" style="width:105px;">
+									<option value="">선택하세요</option>
+									<option value="http://www.smpa.go.kr/">서울특별시경찰청</option>
+									<option value="http://www.bspolice.go.kr/main/main.html">부산광역시경찰청</option>
+									<option value="http://www.dgpolice.go.kr/">대구광역시경찰청</option>
+									<option value="http://www.icpolice.go.kr/">인천광역시경찰청</option>
+									<option value="http://www.gjpolice.go.kr/">광주광역시경찰청</option>
+									<option value="http://www.djpolice.go.kr/">대전광역시경찰청</option>
+									<option value="http://www.uspolice.go.kr/">울산광역시경찰청</option>
+									<option value="http://www.sjpolice.go.kr/">세종특별자치시경찰청</option>
+									<option value="http://www.ggpolice.go.kr/">경기도남부경찰청</option>
+									<option value="http://www.ggbpolice.go.kr/">경기도북부경찰청</option>
+									<option value="http://www.kwpolice.go.kr/">강원도경찰청</option>
+									<option value="http://www.cbpolice.go.kr/">충청북도경찰청</option>
+									<option value="http://www.cnpolice.go.kr/">충청남도경찰청</option>
+									<option value="http://www.jbpolice.go.kr/index.sko">전라북도경찰청</option>
+									<option value="http://www.jnpolice.go.kr/">전라남도경찰청</option>
+									<option value="http://www.gbpolice.go.kr/">경상북도경찰청</option>
+									<option value="http://www.gnpolice.go.kr/">경상남도경찰청</option>
+									<option value="http://www.jjpolice.go.kr/jjpolice/">제주특별자치도경찰청</option>
+									<option value="http://www.police.go.kr/">사이버경찰청</option>
+									<option value="http://www.police.ac.kr/">경찰대학</option>
+									<option value="http://www.pti.go.kr/">경찰교육원</option>
+									<option value="http://www.kpia.go.kr/">경찰수사연수원</option>
+									<option value="http://www.cpa.go.kr/">중앙경찰학교</option>
+									<option value="http://www.policemuseum.go.kr/">경찰박물관</option>
+									<option value="http://www.nph.go.kr/index.jsp">경찰병원</option>
+									<option value="http://www.netan.go.kr/">사이버테러대응센터</option>
+									<option value="http://www.pmaa.or.kr/police/">경찰공제회</option>
+									<option value="http://www.nfs.go.kr/">국립과학수사연구원</option>
+									<option value="http://www.kpsi.go.kr/">경찰과학수사센터</option>
+									<option value="http://www.koroad.or.kr/Work/Main/Main.jsp">도로교통공단</option>
+									</select>
+								</div>
+								<a href="javascript:fn_affiliatePopup();" onclick="" class="dark-btn">이동</a>
+						</div>
+					</div>
+
+					<div class="col-lg-7  col-md-offset-3 footer-copyright">
+						<p>Copyright 2019 Police Agency for Children, Women and Disabled. All rights reserved.</p>
+						<!-- 
+						<ul class="footer-follow">
+							<li><a href="http://twitter.com/#!/polinlove" target="_blank" onclick="" title="트위터(새창)"><img src="/static/home/new_images/ic_twitter.png" alt="트위터"></a></li>
+							<li><a href="http://www.facebook.com/polinlove1" onclick="" target="_blank" title="FACEBOOK(새창)"><img src="/static/home/new_images/ic_facebook.png" alt="페이스북"></a></li>
+							<li><a href="http://polinlove.tistory.com/" target="_blank" onclick="" title="DAUM(새창)"><img src="/static/home/new_images/ic_daum.png" alt="다음"></a></li>
+							<li><a href="http://blog.naver.com/safe182pol/" target="_blank" onclick="" title="NAVER(새창)"><img src="/static/home/new_images/ic_naver.png" alt="네이버"></a></li>
+						</ul>
+						 -->
+					</div>
+
+			</div>
+
+		</div>
+
+	</footer>
+
+	<!-- Back to top -->
+	<div id="back-to-top"></div>
+	<!-- /Back to top -->
+
+	<!-- 전체 메뉴 POP-UP -->
+	<div id="full-menu" class="white-popup mfp-hide">
+		<h1>전체메뉴</h1>
+		<div class="menu-cnt">
+			<!--  total menu  -->
+			<ul class="total-menu"><!-- upper_cd, menu_cd
+				--><li><a href="javascript:fn_Gnb(&#39;/cont/homeLogContents.do?contentsNm=182_outline&#39;,&#39;008000000000&#39;,&#39;008004001000&#39;);">실종아동등</a>
+					<ul>
+						<li><a href="javascript:fn_Gnb(&#39;/cont/homeLogContents.do?contentsNm=182_outline&#39;,&#39;008000000000&#39;,&#39;008004001000&#39;);">실종아동등</a>
+							<ul>
+								<li><a href="javascript:fn_Gnb(&#39;/cont/homeLogContents.do?contentsNm=182_outline&#39;,&#39;008004000000&#39;,&#39;008004001000&#39;);">실종아동등이란</a></li>
+								<li><a href="javascript:fn_Gnb(&#39;/cont/homeLogContents.do?contentsNm=182_miss_main&#39;,&#39;008004000000&#39;,&#39;008004002000&#39;);">실종아동 예방수칙</a></li>
+								<li><a href="javascript:fn_Gnb(&#39;/cont/homeLogContents.do?contentsNm=182_abduct_main&#39;,&#39;008004000000&#39;,&#39;008004003000&#39;);">유괴예방 수칙</a></li>
+								<li><a href="javascript:fn_Lnb(&#39;/cont/homeLogContents.do?contentsNm=182_play_making_tab1&#39;,&#39;008004000000&#39;,&#39;008004005000&#39;);">기억해두세요(실종예방지식)</a></li>
+							</ul>
+						</li>
+						<!--<li><a href="javascript:fn_Gnb('/cont/homeLogContents.do?contentsNm=182_miss_main','008000000000','008002000000');">실종아동 예방수칙</a></li>-->
+						<!--<li><a href="javascript:fn_Gnb('/cont/homeLogContents.do?contentsNm=182_abduct_main','008000000000','008003000000');">유괴예방 수칙</a></li>-->
+						<!--<li><a href="javascript:fn_Gnb('/cont/homeLogContents.do?contentsNm=182_play_making_tab1','008000000000','008004001000');">아이와 함께 해보아요</a>
+							<ul class="menu">
+								<li><a href="javascript:fn_Lnb('/cont/homeLogContents.do?contentsNm=182_play_making_tab1','008000000000','008004001000');">기억해두세요!</a></li>
+								<li><a href="javascript:fn_Lnb('/cont/homeLogContents.do?contentsNm=182_play_save','008000000000','008004002000');">구해주세요!</a></li>
+								<li><a href="javascript:fn_Lnb('/cont/homeLogContents.do?contentsNm=182_play_quiz','008000000000','008004003000');">아동안전지식퀴즈</a></li>
+							</ul>
+						</li>-->
+						<li><a href="javascript:fn_Lnb(&#39;/cont/homeLogContents.do?contentsNm=182_keeper_outline&#39;,&#39;008000000000&#39;,&#39;008005001000&#39;);">아동 안전지킴이집</a>
+							<ul>
+								<li><a href="javascript:fn_Lnb(&#39;/cont/homeLogContents.do?contentsNm=182_keeper_outline&#39;,&#39;008000000000&#39;,&#39;008005001000&#39;);">아동안전지킴이집이란?</a></li>
+								<li><a href="javascript:fn_Lnb(&#39;/cont/homeLogContents.do?contentsNm=182_keeper_use&#39;,&#39;008000000000&#39;,&#39;008005002000&#39;);">이럴때 이용하세요</a></li>
+								<li><a href="javascript:fn_Lnb(&#39;/cont/homeLogContents.do?contentsNm=182_keeper_act_tab1&#39;,&#39;008000000000&#39;,&#39;008005003000&#39;);">지킴이집 행동요령</a></li>
+								<li><a href="javascript:fn_Lnb(&#39;/lom/listLcInfoMap.do&#39;,&#39;008000000000&#39;,&#39;008005004000&#39;);;">아동안전지킴이집 검색</a></li>
+							</ul>
+						</li>
+					</ul>
+				</li>
+				<li><a href="javascript:fn_Lnb(&#39;/home/lcm/lcmMssList.do?rptDscd=2&#39;,&#39;014000000000&#39;,&#39;014001000000&#39;);" class="h-light">실종아동등 검색</a>
+					<ul>
+						<li><a href="javascript:fn_Lnb(&#39;/home/lcm/lcmMssList.do?rptDscd=2&#39;,&#39;014000000000&#39;,&#39;014001000000&#39;);">찾고 있어요</a></li>
+						<li><a href="javascript:fn_Lnb(&#39;/home/lcm/lcmMssList.do?rptDscd=1&#39;,&#39;014000000000&#39;,&#39;014002000000&#39;);">보호하고 있어요</a></li>
+						<li><a href="javascript:fn_Lnb(&#39;/home/lcm/lcmMssList.do?rptDscd=2&amp;amalGnfdyn=Y&#39;,&#39;014000000000&#39;,&#39;014003000000&#39;);">실종경보발령</a></li>
+					</ul>
+				</li>
+				<li><a href="javascript:fn_Lnb(&#39;/cont/homeLogContents.do?contentsNm=school_vio_overview&#39;,&#39;010000000000&#39;,&#39;010001001000&#39;);">학교폭력</a>
+					<ul>
+						<li><a href="javascript:fn_Gnb(&#39;/cont/homeLogContents.do?contentsNm=school_vio_overview&#39;,&#39;010000000000&#39;,&#39;010001001000&#39;);">학교폭력</a>
+							<ul>
+								<li><a href="javascript:fn_Lnb(&#39;/cont/homeLogContents.do?contentsNm=school_vio_overview&#39;,&#39;010000000000&#39;,&#39;010001001000&#39;);">학교폭력이란</a></li>
+								<li><a href="javascript:fn_Lnb(&#39;/cont/homeLogContents.do?contentsNm=school_vio_rule&#39;,&#39;010000000000&#39;,&#39;010001002000&#39;);">피해자 보호·지원</a></li>
+								<!--<li><a href="javascript:fn_Lnb('/bom/selectBoardList.do?bbsId=BBSMSTR_000000000363&amp;ctgrySearch=BBSE07','010000000000','010001003000');">참조사례 보기</a></li>-->
+							</ul>
+						</li>
+						<!--<li><a href="javascript:fn_Lnb('/cont/homeLogContents.do?contentsNm=school_envir_overview','010000000000','010002001000');">청소년 유해환경</a>
+							<ul>
+								<li><a href="javascript:fn_Lnb('/cont/homeLogContents.do?contentsNm=school_envir_overview','010000000000','010002001000');">청소년유해환경이란</a></li>
+								<li><a href="javascript:fn_Lnb('/cont/homeLogContents.do?contentsNm=school_envir_rule','010000000000','010002002000');">신고·처벌 기준</a></li>
+								<li><a href="javascript:fn_Lnb('/bom/selectBoardList.do?bbsId=BBSMSTR_000000000363&amp;ctgrySearch=BBSE08','010000000000','010002003000');">참조사례 보기</a></li>
+							</ul>
+						</li>-->
+						<!-- 
+						<li><a href="javascript:fn_Lnb('/bom/selectBoardList.do?bbsId=BBSMSTR_000000000383','010000000000','010003000000');">이런 것도 죄가 되나요?</a></li>
+						<li><a href="javascript:fn_Lnb('/bom/selectBoardList.do?bbsId=BBSMSTR_000000000384','010000000000','010004000000');">범죄예방 교육</a></li>
+						<li><a href="javascript:fn_Lnb('/bom/selectBoardList.do?bbsId=BBSMSTR_000000000385','010000000000','010006000000');">청소년 법률생활정보</a></li>
+						 -->
+						<li><a href="javascript:fn_Lnb(&#39;/cont/homeLogContents.do?contentsNm=youth_pol_net&#39;,&#39;010000000000&#39;,&#39;010007000000&#39;);">유스폴넷(청소년경찰학교)</a></li>
+					</ul>
+				</li>
+				<li><a href="javascript:fn_Lnb(&#39;/cont/homeLogContents.do?contentsNm=family_vio_overview&#39;,&#39;011000000000&#39;,&#39;011001001000&#39;);">가정폭력·학대</a>
+					<ul>
+						<li><a href="javascript:fn_Lnb(&#39;/cont/homeLogContents.do?contentsNm=family_vio_overview&#39;,&#39;011000000000&#39;,&#39;011001001000&#39;);">가정폭력</a>
+							<ul>
+								<li><a href="javascript:fn_Lnb(&#39;/cont/homeLogContents.do?contentsNm=family_vio_overview&#39;,&#39;011000000000&#39;,&#39;011001001000&#39;);">가정폭력이란</a></li>
+								<li><a href="javascript:fn_Lnb(&#39;/cont/homeLogContents.do?contentsNm=family_vio_rule&#39;,&#39;011000000000&#39;,&#39;011001002000&#39;);">피해자 보호·지원</a></li>
+							</ul>
+						</li>
+						<li><a href="javascript:fn_Gnb(&#39;/cont/homeLogContents.do?contentsNm=family_abuse_overview&#39;,&#39;011000000000&#39;,&#39;011002001000&#39;);">아동학대</a>
+							<ul>
+								<li><a href="javascript:fn_Gnb(&#39;/cont/homeLogContents.do?contentsNm=family_abuse_overview&#39;,&#39;011000000000&#39;,&#39;011002001000&#39;);">아동학대란</a></li>
+								<li><a href="javascript:fn_Lnb(&#39;/cont/homeLogContents.do?contentsNm=family_abuse_rule&#39;,&#39;011000000000&#39;,&#39;011002002000&#39;);">피해자 보호·지원</a></li>
+								<!--<li><a href="javascript:fn_Lnb('/bom/selectBoardList.do?bbsId=BBSMSTR_000000000363&amp;ctgrySearch=BBSE06','011000000000','011002003000');">참조사례 보기</a></li>-->
+							</ul>
+						</li>
+					</ul>
+				</li>
+				<li><a href="javascript:fn_Lnb(&#39;/cont/homeLogContents.do?contentsNm=sexual_vio_overview&#39;,&#39;009000000000&#39;,&#39;009002001000&#39;);">성범죄</a>
+					<ul>
+						<!--<li><a href="javascript:fn_Lnb('/cont/homeLogContents.do?contentsNm=sexual_tempt','009000000000','009001001000');">청소년 성매수유인</a>
+							<ul>
+								<li><a href="javascript:fn_Lnb('/cont/homeLogContents.do?contentsNm=sexual_tempt','009000000000','009001001000');">청소년 성매수유인이란</a></li>
+								<li><a href="javascript:fn_Lnb('/cont/homeLogContents.do?contentsNm=sexual_tempt_rule','009000000000','009001002000');">신고·처벌 기준</a></li>
+								<li><a href="javascript:fn_Lnb('/bom/selectBoardList.do?bbsId=BBSMSTR_000000000363&amp;ctgrySearch=BBSE03','009000000000','009001003000');">참조사례보기</a></li>
+								<li><a href="javascript:fn_Lnb('/cont/homeLogContents.do?contentsNm=sexual_report_rewards','009000000000','009001007000');">신고 포상금</a></li>
+								<li><a href="javascript:fn_Lnb('/cont/homeLogContents.do?contentsNm=sexual_youth_camp','009000000000','009001004000');">청소년 성장캠프 소개</a></li>
+								<li><a href="javascript:fn_Lnb('/cont/homeLogContents.do?contentsNm=sexual_report_guide','009000000000','009001005000');">총소년 성매수유인 신고방법</a></li>
+								<li><a href="javascript:fn_Lnb('/cont/homeLogContents.do?contentsNm=sexual_victim_installation','009000000000','009001006000');">피해자 지원시설 운영현황</a></li>
+							</ul>
+						</li>-->
+						<!--<li><a href="javascript:fn_Gnb('/cont/homeLogContents.do?contentsNm=sexual_abuse_overview','009000000000','009004001000');">아동성폭력</a>
+							<ul class="menu">
+								<li><a href="javascript:fn_Lnb('/cont/homeLogContents.do?contentsNm=sexual_abuse_overview','009000000000','009004001000');">아동성폭력이란</a></li>
+								<li><a href="javascript:fn_Lnb('/cont/homeLogContents.do?contentsNm=sexual_abuse_rule','009000000000','009004002000');">신고·처벌 기준</a></li>
+								<li><a href="javascript:fn_Lnb('/bom/selectBoardList.do?bbsId=BBSMSTR_000000000363&amp;ctgrySearch=BBSE05','009000000000','009004003000');">참조사례보기</a></li>
+							</ul>
+						</li>-->
+						<li><a href="javascript:fn_Lnb(&#39;/cont/homeLogContents.do?contentsNm=sexual_vio_overview&#39;,&#39;009000000000&#39;,&#39;009002001000&#39;);">성폭력</a>
+							<ul>
+								<li><a href="javascript:fn_Lnb(&#39;/cont/homeLogContents.do?contentsNm=sexual_vio_overview&#39;,&#39;009000000000&#39;,&#39;009002001000&#39;);">성폭력이란</a></li>
+								<li><a href="javascript:fn_Lnb(&#39;/cont/homeLogContents.do?contentsNm=sexual_vio_support&#39;,&#39;009000000000&#39;,&#39;009002003000&#39;);">피해자 보호·지원</a></li>
+								<!--<li><a href="javascript:fn_Lnb('/bom/selectBoardList.do?bbsId=BBSMSTR_000000000363&amp;ctgrySearch=BBSE04','009000000000','009002003000');">참조사례보기</a></li>-->
+							</ul>
+						</li>
+						<li><a href="javascript:fn_Gnb(&#39;/cont/homeLogContents.do?contentsNm=sexual_prost_overview&#39;,&#39;009000000000&#39;,&#39;009003001000&#39;);">성매매</a>
+							<ul>
+								<li><a href="javascript:fn_Gnb(&#39;/cont/homeLogContents.do?contentsNm=sexual_prost_overview&#39;,&#39;009000000000&#39;,&#39;009003001000&#39;);">성매매란</a></li>
+								<li><a href="javascript:fn_Lnb(&#39;/cont/homeLogContents.do?contentsNm=sexual_prost_support&#39;,&#39;009000000000&#39;,&#39;009003003000&#39;);">피해자 보호·지원</a></li>
+								<!--<li><a href="javascript:fn_Lnb('/bom/selectBoardList.do?bbsId=BBSMSTR_000000000363&amp;ctgrySearch=BBSE02','009000000000','009003003000');">참조사례보기</a></li>-->
+							</ul>
+						</li>
+						<li><a href="javascript:fn_Lnb(&#39;http://www.sexoffender.go.kr/&#39;,&#39;009000000000&#39;,&#39;009005000000&#39;);">성범죄자정보 조회</a></li>
+					</ul>
+				</li><!--
+				스토킹 추가
+				-->
+				<li><a href="javascript:fn_Lnb(&#39;/cont/homeLogContents.do?contentsNm=stalking_vio_overview&#39;,&#39;035001000000&#39;,&#39;035001001000&#39;);">스토킹</a>
+				<ul>
+				<li><a href="javascript:fn_Lnb(&#39;/cont/homeLogContents.do?contentsNm=stalking_vio_overview&#39;,&#39;035001000000&#39;,&#39;035001001000&#39;);">스토킹</a>
+							<ul>
+								<li><a href="javascript:fn_Lnb(&#39;/cont/homeLogContents.do?contentsNm=stalking_vio_overview&#39;,&#39;035001000000&#39;,&#39;035001001000&#39;);">스토킹이란</a></li>
+								<li><a href="javascript:fn_Lnb(&#39;/cont/homeLogContents.do?contentsNm=stalking_vio_support&#39;,&#39;035001000000&#39;,&#39;035001002000&#39;);">피해자 보호·지원</a></li>
+								<!--<li><a href="javascript:fn_Lnb('/bom/selectBoardList.do?bbsId=BBSMSTR_000000000363&amp;ctgrySearch=BBSE04','009000000000','009002003000');">참조사례보기</a></li>-->
+							</ul>
+						</li>
+						</ul>
+						</li>
+				<li><a href="javascript:fn_Lnb(&#39;/bom/selectBoardList.do?bbsId=BBSMSTR_000000000371&#39;,&#39;012000000000&#39;,&#39;012001000000&#39;);">알림마당</a>
+					<ul>
+						<li><a href="javascript:fn_Lnb(&#39;/bom/selectBoardList.do?bbsId=BBSMSTR_000000000371&#39;,&#39;012000000000&#39;,&#39;012001000000&#39;);">공지사항</a></li>
+						<li><a href="javascript:fn_Lnb(&#39;/bom/selectBoardList.do?bbsId=BBSMSTR_000000000301&#39;,&#39;012000000000&#39;,&#39;012003000000&#39;);">FAQ</a></li>
+						<li><a href="javascript:fn_Lnb(&#39;/bom/selectBoardList.do?bbsId=BBSMSTR_000000000361&#39;,&#39;012000000000&#39;,&#39;012004000000&#39;);">법률정보</a></li>
+						<!--<li><a href="javascript:fn_Lnb('/bom/selectBoardList.do?bbsId=BBSMSTR_000000000362','012000000000','012005000000');">지식자료</a></li>-->
+						<!--<li><a href="javascript:fn_Lnb('/bom/selectBoardList.do?bbsId=BBSMSTR_000000000363','012000000000','012006000000');">참조사례</a></li>-->
+					</ul>
+				</li>
+				<li><a href="javascript:fn_Lnb(&#39;/home/lcm/LcmMsspasnRpt1Create.do?rptDscd=2&#39;,&#39;013000000000&#39;,&#39;013001001000&#39;);" class="h-light">신고·상담</a>
+					<ul>
+						<!-- 
+						<li><a href="javascript:fn_Lnb('/home/lcm/LcmMsspasnRpt1Create.do?rptDscd=2','013000000000','013001001000');">실종아동등</a>
+							<ul>
+								<li><a href="javascript:fn_Lnb('/home/lcm/LcmMsspasnRpt1Create.do?rptDscd=2','013000000000','013001001000');">실종아동등 신고</a></li>
+								<li><a href="javascript:fn_Lnb('/home/lcm/LcmMsspasnRpt1Create.do?rptDscd=1','013000000000','013001002000');">보호아동등 신고</a></li>
+							</ul>
+						</li>
+						 -->
+						<li><a href="javascript:fn_Lnb(&#39;/home/dic/dicaryBrowesWrap.do&#39;,&#39;013000000000&#39;,&#39;013012000000&#39;);">사전등록 신청</a></li>
+						
+						<li><a href="javascript:fn_Lnb(&#39;/pot/rpt/getPotSexualToxEnv.do&#39;,&#39;013000000000&#39;,&#39;013002000000&#39;);">성범죄, 가정폭력·학대, 청소년유해환경</a></li>
+						<li><a href="javascript:fn_Lnb(&#39;/pot/selectRptList.do?rptTyGubun=09&#39;,&#39;013000000000&#39;,&#39;013007000000&#39;);">학교폭력</a></li>
+						
+						<!--  
+						<li><a href="javascript:fn_Lnb('/pot/selectRptList.do?rptTyGubun=10','013000000000','013011000000');">청소년 유해환경</a></li>
+						<li><a href="javascript:fn_Lnb('/pot/selectRptList.do?rptTyGubun=12','013000000000','013008000000');">가정폭력, 학대</a></li>
+						<li><a href="javascript:fn_Lnb('/pot/selectRptList.do?rptTyGubun=07','013000000000','013006000000');">성범죄</a></li>
+						-->
+						
+						<li><a href="javascript:fn_Lnb(&#39;/cont/homeLogContents.do?contentsNm=report_info_dicary&#39;,&#39;013000000000&#39;,&#39;013005005000&#39;);">신고·처리 안내</a>
+							<ul>
+								<li><a href="javascript:fn_Lnb(&#39;/cont/homeLogContents.do?contentsNm=report_info_dicary&#39;,&#39;013000000000&#39;,&#39;013005005000&#39;);">사전등록 신청안내</a></li>
+								<li><a href="javascript:fn_Lnb(&#39;/cont/homeLogContents.do?contentsNm=report_info_182&#39;,&#39;013000000000&#39;,&#39;013005001000&#39;);">182, 117 신고·처리 안내</a></li>
+								<li><a href="javascript:fn_Lnb(&#39;/cont/homeLogContents.do?contentsNm=report_info_dna&#39;,&#39;013000000000&#39;,&#39;013005002000&#39;);">DNA활용 실종아동등찾기 안내</a></li>
+								<li><a href="javascript:fn_Lnb(&#39;/cont/homeLogContents.do?contentsNm=report_info_mo&#39;,&#39;013000000000&#39;,&#39;013005003000&#39;);">문자신고(MO) 서비스안내</a></li>
+							</ul>
+						</li>
+						<li><a href="javascript:fn_Lnb(&#39;/home/dic/dicaryConfirm.do&#39;,&#39;013000000000&#39;,&#39;013004000000&#39;);">나의 신고확인</a></li>
+					</ul>
+				</li>
+				<!--
+				<li><a href="javascript:fn_Lnb('/bom/selectBoardList.do?bbsId=BBSMSTR_000000000364','016000000000','016001000000');">자유게시판</a>
+					<ul>
+						<li><a href="javascript:fn_Lnb('/bom/selectBoardList.do?bbsId=BBSMSTR_000000000364','016000000000','016001000000');">시민의견게시판</a></li>
+					</ul>
+					-->
+				
+				<li><a href="javascript:fn_Lnb(&#39;/home/api/guideMain.do&#39;,&#39;017000000000&#39;,&#39;017007001000&#39;);">OPEN API</a>
+					<ul>
+						<li><a href="javascript:fn_Gnb(&#39;/home/api/guideMain.do&#39;,&#39;017000000000&#39;,&#39;017007001000&#39;);">OPEN API 서비스</a>
+							<ul>
+								<li><a href="javascript:fn_Lnb(&#39;/home/api/guideMain.do&#39;,&#39;017000000000&#39;,&#39;017007001000&#39;);">개발 가이드</a></li>
+								<li><a href="javascript:fn_Lnb(&#39;/home/api/guide3.do&#39;,&#39;017000000000&#39;,&#39;017007002000&#39;);">OPEN API</a></li>
+								<li><a href="javascript:fn_Lnb(&#39;/home/api/authKey1Create.do&#39;,&#39;017000000000&#39;,&#39;017007003000&#39;);">인증키 발급</a></li>
+								<li><a href="javascript:fn_Lnb(&#39;/home/api/faq.do?nowPage=0&#39;,&#39;017000000000&#39;,&#39;017007004000&#39;);">FAQ</a></li>
+							</ul>
+						</li>
+					</ul>
+				</li>
+				<li><a href="javascript:fn_Lnb(&#39;/cont/homeLogContents.do?contentsNm=intro_safeDream&#39;,&#39;018000000000&#39;,&#39;018009000000&#39;);">아동·여성·장애인 경찰지원센터 소개</a>
+					<ul>
+						<!--<li><a href="javascript:fn_Lnb('/cont/homeLogContents.do?contentsNm=intro_safeDream','018000000000','018002000000');">안전Dream 소개</a></li>-->
+						<!--<li><a href="javascript:fn_Lnb('/cont/homeContents.do?contentsNm=intro_portal182','018000000000','018004000000');">실종아동찾기 센터 소개</a></li>-->
+						<!--<li><a href="javascript:fn_Lnb('/cont/homeContents.do?contentsNm=intro_portal117','018000000000','018005000000');">117학교폭력 신고센터 소개</a></li>-->
+						<!-- <li><a href="javascript:fn_Lnb('/cont/homeContents.do?contentsNm=intro_group','018000000000','018003000000');">조직도</a></li> -->
+						<li><a href="javascript:fn_Lnb(&#39;/cont/homeContents.do?contentsNm=intro_policy_vio&#39;,&#39;018000000000&#39;,&#39;018009000000&#39;);">운영정책</a></li>
+						<!--<li><a href="javascript:fn_Lnb('/cont/homeContents.do?contentsNm=intro_visit','018000000000','018006000000');">찾아오시는 길</a></li>-->
+						<li><a href="javascript:fn_Lnb(&#39;/cont/homeContents.do?contentsNm=intro_link&#39;,&#39;018000000000&#39;,&#39;018007000000&#39;);">관련사이트</a></li>
+					</ul>
+				</li>
+			</ul>
+			<!-- //total menu -->
+		</div>
+	</div>
+<script type="text/javascript" src="./안전Dream에 오신 것을 환영합니다._files/jquery.min.js.다운로드"></script>
+<script type="text/javascript" src="./안전Dream에 오신 것을 환영합니다._files/bootstrap.min.js.다운로드"></script>
+<script type="text/javascript" src="./안전Dream에 오신 것을 환영합니다._files/owl.carousel.min.js.다운로드"></script>
+<script type="text/javascript" src="./안전Dream에 오신 것을 환영합니다._files/jquery.magnific-popup.js.다운로드"></script>
+<script type="text/javascript" src="./안전Dream에 오신 것을 환영합니다._files/metisMenu.js.다운로드"></script>
+<!--script type="text/javascript" src="/static/home/new_js/html5shiv.min.js"></script-->
+<script type="text/javascript" src="./안전Dream에 오신 것을 환영합니다._files/bootstrap-datepicker.js.다운로드"></script>
+<script type="text/javascript" src="./안전Dream에 오신 것을 환영합니다._files/bootstrap-datepicker.kr.js.다운로드" charset="UTF-8"></script>
+<script type="text/javascript" src="./안전Dream에 오신 것을 환영합니다._files/main.js.다운로드"></script>	
+	
+<script>
+  $(function () { 
+    $('#menu').metisMenu();
+  });
+
+  $('#menu').metisMenu({
+
+  // enabled/disable the auto collapse.
+  toggle: true,
+
+  // prevent default event
+  preventDefault: true,
+
+  // default classes
+  activeClass: 'active',
+  collapseClass: 'collapse',
+  collapseInClass: 'in',
+  collapsingClass: 'collapsing'
+
+  });
+</script>
+
+<script>
+$(function(){
+
+  $('.input-group.date').datepicker({
+      calendarWeeks: false,
+      todayHighlight: true,
+      autoclose: true,
+      format: "yyyy-mm-dd",
+      language: "kr"
+  });
+
+});
+</script>
+
+
+<script type="text/javascript">
+function fn_search() {
+	var param = $("#zipForm").serialize();
+    if (param.indexOf("pageIndex") > 0) {
+    	document.getElementById('zipForm').pageIndex.value = 1;
+    }
+    fn_searchBldgName();
+}
+
+function fn_searchBldgName() {
+
+	with(document.zipForm){
+		if(bldg_nm.value == ''){
+			alert("주소(는) 필수 입력값입니다.");
+			bldg_nm.focus();
+			//bldg_nm.focus();
+			return;
+		}
+		if (bldg_nm.value.length < "2"){
+			alert("검색할 주소는 2글자 이상 입력해야합니다.!!");
+			bldg_nm.focus();
+			//bldg_nm.focus();
+			return;
+		}
+		
+		if("" != "N" && start_bunji.value == "") {
+			alert("시작번지를 입력하세요");
+			start_bunji.focus();
+			return;
+		}
+	}
+	
+	$.ajax({
+	    type : "POST" //"POST", "GET"
+	    , async : true //true, false
+	    , url : "/cmm/adr/selectComAdrSearchT03.do" //Request URL
+	    , dataType : "html" //전송받을 데이터의 타입
+		//"xml", "html", "script", "json" 등 지정 가능
+		//미지정시 자동 판단
+	    , timeout : 30000 //제한시간 지정
+	    , cache : false  //true, false
+	    , data : $("#zipForm").serialize() //서버에 보낼 파라메터
+	                     //form에 serialize() 실행시 a=b&c=d 형태로 생성되며 한글은 UTF-8 방식으로 인코딩
+	                     //"a=b&c=d" 문자열로 직접 입력 가능
+	    , contentType: "application/x-www-form-urlencoded; charset=UTF-8"
+	    , error : function(request, status, error) {
+	     //통신 에러 발생시 처리
+	     alert("code : " + request.status + "\r\nmessage : " + request.reponseText);
+	    }
+	    , success : function(response, status, request) {
+	     //통신 성공시 처리
+	     //$('#section00').append(response);
+	     //stopWaiting();
+	     $("#resultList").html(response);
+	     /*if(document.getElementById("03T03Result").innerHTML == "") {
+	     //if($("#03T03Result").html() == "") {
+	    	 $("#03T03Result").html("<tr><td>검색 결과가 없습니다.</td></tr>");
+	    	 $("#paginTotal").html("");
+	     }*/
+	     //stopWaiting(); 
+	    }
+	    , beforeSend: function() {
+	     //통신을 시작할때 처리
+	     //startWaiting("resultList");
+	     //$('#ajax_indicator').show().fadeIn('fast'); 
+	     $.blockUI({message : "<img src='/images/egovframework/cmm/ajax-loader.gif'/>"});
+	    }
+	    , complete: function() {
+	     //통신이 완료된 후 처리
+	     //$('#ajax_indicator').fadeOut();
+	     //stopWaiting();
+	     $.unblockUI();
+	    }
+	});
+}
+</script>
+
+
+
+	
+</body></html>

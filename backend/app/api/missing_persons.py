@@ -136,6 +136,15 @@ async def get_missing_persons(
     # 전체 개수 (필터 적용 후)
     total_count = query.count()
 
+    # 사진 URL을 full URL로 변환 (백엔드 서버 기준)
+    def get_photo_urls(photo_urls_str):
+        if not photo_urls_str:
+            return []
+        # 상대 경로를 절대 URL로 변환
+        # 예: "downloaded_photos/6048080/photo_0.jpg" -> "/photos/6048080/photo_0.jpg"
+        paths = photo_urls_str.split(",")
+        return [f"/photos/{path.split('/')[-2]}/{path.split('/')[-1]}" for path in paths if path]
+
     return {
         "total": total_count,
         "items": [
@@ -151,6 +160,7 @@ async def get_missing_persons(
                 "location_detail": p.location_detail,
                 "latitude": p.latitude,
                 "longitude": p.longitude,
+<<<<<<< HEAD
                 "geocoding_status": p.geocoding_status,
                 "height": p.height,
                 "weight": p.weight,
@@ -163,6 +173,13 @@ async def get_missing_persons(
                 "special_features": p.special_features,
                 "status": p.status,
                 "resolved_at": p.resolved_at.isoformat() if p.resolved_at else None,
+=======
+                "status": p.status,
+                "resolved_at": p.resolved_at.isoformat() if p.resolved_at else None,
+                # 사진 정보
+                "photo_urls": get_photo_urls(p.photo_urls),
+                "photo_count": p.photo_count or 0,
+>>>>>>> d1176d62440f338400f576518b53ff4a493b3716
             }
             for p in persons
         ]
@@ -242,29 +259,42 @@ async def get_statistics(
 @router.post("/sync/missing-persons")
 async def sync_missing_persons(
     max_pages: int = Query(10, ge=1, le=50),
+    scrape_photos: bool = Query(False, description="사진 스크랩 여부"),
+    max_photo_persons: int = Query(50, ge=1, le=200, description="사진 스크랩 최대 인원"),
     db: Session = Depends(get_db)
 ):
-    """안전Dream API에서 데이터 동기화"""
+    """
+    안전Dream API에서 데이터 동기화
+
+    Args:
+        max_pages: 최대 페이지 수
+        scrape_photos: 사진 스크랩 여부 (기본값: False)
+        max_photo_persons: 사진 스크랩할 최대 인원 (기본값: 50명)
+    """
     api_key = os.getenv("SAFE_DREAM_API_KEY")
     if not api_key:
         raise HTTPException(
-            status_code=500, 
+            status_code=500,
             detail="API 키가 설정되지 않았습니다"
         )
-    
+
     try:
         service = DataSyncService(api_key=api_key)
-        result = await service.sync_all_data(max_pages=max_pages)
-        
+        result = await service.sync_all_data(
+            max_pages=max_pages,
+            scrape_photos=scrape_photos,
+            max_photo_persons=max_photo_persons
+        )
+
         if not result["success"]:
             return {
                 "status": "error",
                 "message": "동기화 중 오류가 발생했습니다",
                 "errors": result["errors"]
             }
-        
+
         stats = service.get_statistics()
-        
+
         return {
             "status": "success",
             "message": "데이터 동기화 완료",
@@ -272,14 +302,16 @@ async def sync_missing_persons(
                 "total_fetched": result["total_fetched"],
                 "new_added": result["new_added"],
                 "updated": result["updated"],
-                "resolved": result["resolved"],  # ✅ 추가
+                "resolved": result["resolved"],
                 "skipped": result["skipped"],
+                "photos_scraped": result.get("photos_scraped", 0),
+                "total_photos": result.get("total_photos", 0),
                 "duration_seconds": result["duration"],
             },
             "database_stats": stats,
             "errors": result["errors"] if result["errors"] else None
         }
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"동기화 실패: {str(e)}")
 
@@ -288,37 +320,44 @@ async def sync_missing_persons(
 async def get_db_statistics(db: Session = Depends(get_db)):
     """데이터베이스 전체 통계"""
     total_count = db.query(MissingPerson).count()
-    
+
     geocoded_count = db.query(MissingPerson).filter(
         MissingPerson.latitude.isnot(None),
         MissingPerson.longitude.isnot(None)
     ).count()
-    
+
+    # 사진 통계
+    photos_count = db.query(MissingPerson).filter(
+        MissingPerson.photo_count > 0
+    ).count()
+
     recent_date = datetime.now() - timedelta(days=7)
     recent_count = db.query(MissingPerson).filter(
         MissingPerson.created_at >= recent_date
     ).count()
-    
+
     latest = db.query(MissingPerson)\
         .order_by(MissingPerson.updated_at.desc())\
         .first()
-    
+
     # 가장 오래된 데이터
     oldest = db.query(MissingPerson)\
         .filter(MissingPerson.missing_date.isnot(None))\
         .order_by(MissingPerson.missing_date.asc())\
         .first()
-    
+
     # 가장 최근 데이터
     newest = db.query(MissingPerson)\
         .filter(MissingPerson.missing_date.isnot(None))\
         .order_by(MissingPerson.missing_date.desc())\
         .first()
-    
+
     return {
         "total_count": total_count,
         "geocoded_count": geocoded_count,
         "geocoded_percentage": round(geocoded_count / total_count * 100, 1) if total_count > 0 else 0,
+        "photos_count": photos_count,
+        "photos_percentage": round(photos_count / total_count * 100, 1) if total_count > 0 else 0,
         "recent_count": recent_count,
         "last_updated": latest.updated_at.isoformat() if latest else None,
         "date_range": {

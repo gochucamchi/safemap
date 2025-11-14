@@ -117,6 +117,7 @@ class SafeDreamAPI:
 
             return {
                 "external_id": str(item.get("msspsnIdntfccd", "")),
+<<<<<<< HEAD
                 "name": item.get("nm", ""),  # 이름
                 "missing_date": self._parse_date(item.get("occrde")),  # 발생일시
                 "age_at_disappearance": self._parse_age(item.get("age")),  # 실종 당시 나이
@@ -146,6 +147,28 @@ class SafeDreamAPI:
 
                 # 기타 특징
                 "special_features": item.get("etcSpfeatr", ""),  # 기타 특이사항
+=======
+                "missing_date": self._parse_date(item.get("occrde")),
+                "location_address": item.get("occrAdres", ""),
+                "location_detail": item.get("alldressingDscd", ""),  # 전체 착의사항 (호환성 유지)
+                "age": self._parse_age(item.get("age")),  # 당시 나이
+                "gender": self._parse_gender(item.get("sexdstnDscd")),
+
+                # 신체 특징 (실제 API 필드명 기반)
+                "name": item.get("nm", ""),  # 성명
+                "age_now": self._parse_number(item.get("ageNow")),  # 현재나이
+                "height": self._parse_number(item.get("height")),  # 신장
+                "weight": self._parse_number(item.get("bdwgh")),  # 체중
+                "body_type": item.get("frmDscd", ""),  # 체격
+                "face_shape": item.get("faceshpeDscd", ""),  # 얼굴형
+                "hair_style": item.get("hairshpeDscd", ""),  # 두발형태
+                "hair_color": item.get("haircolrDscd", ""),  # 두발색상
+                "clothing_description": item.get("dressngDscd", ""),  # 착의사항 상세
+                "special_features": item.get("etcSpfeatr", ""),  # 기타 특징
+
+                "latitude": None,
+                "longitude": None,
+>>>>>>> d1176d62440f338400f576518b53ff4a493b3716
             }
         except Exception as e:
             print(f"⚠️ 데이터 파싱 실패: {e}")
@@ -180,10 +203,17 @@ class SafeDreamAPI:
             return "F"
         return None
 
+<<<<<<< HEAD
     def _parse_number(self, number_str) -> Optional[int]:
         """숫자 파싱 (키, 몸무게 등)"""
         try:
             return int(number_str) if number_str else None
+=======
+    def _parse_number(self, value) -> Optional[int]:
+        """숫자 파싱 (신장, 체중 등)"""
+        try:
+            return int(value) if value else None
+>>>>>>> d1176d62440f338400f576518b53ff4a493b3716
         except:
             return None
 

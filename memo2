@@ -1,0 +1,39 @@
+# 사진 포함 동기화
+curl -X POST "http://localhost:8000/api/v1/sync/missing-persons?scrape_photos=true&max_photo_persons=50"
+
+# 실종자 조회 (사진 정보 포함)
+curl "http://localhost:8000/api/v1/missing-persons"
+
+# 통계 (사진 통계 포함)
+curl "http://localhost:8000/api/v1/db/stats"
+
+# 서버 실행
+cd backend
+source venv/bin/activate
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# 사진 스크랩 포함 동기화
+curl -X POST "http://localhost:8000/api/v1/sync/missing-persons?scrape_photos=true&max_photo_persons=50"
+
+옵션 2: Python 스크립트로 직접 실행
+from app.services.photo_scraper_service import PhotoScraperService
+import asyncio
+
+async def main():
+    persons = [
+        {"external_id": "6048080", "name": "이진현"},
+        {"external_id": "6048041", "name": "송인식"}
+    ]
+    
+    async with PhotoScraperService(delay=3.0) as scraper:
+        results = await scraper.scrape_multiple_persons(persons)
+    
+    for person_id, urls in results.items():
+        print(f"{person_id}: {len(urls)}개 사진")
+
+asyncio.run(main())
+
+cd backend
+python3 migrate_db.py
+
+curl -X POST "http://localhost:8000/api/v1/sync/missing-persons?scrape_photos=true&max_photo_persons=100"
